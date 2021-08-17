@@ -15,3 +15,6 @@ docker run -d \
 --name coj-migrate-api \
 ghcr.io/dtdevteam/coj-migration-api:latest
 ```
+
+## Webhook
+`https://kaikannook:116ce83533287a05f91d9f8156b6fcffcb@jenkins.kaikannook.com/job/COJ-Migration/job/migrate-api/build?token=Lmdja028ajsdlSdKmdfmdsf92`
