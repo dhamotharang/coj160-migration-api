@@ -4,6 +4,7 @@ RUN apt-get update
 RUN apt-get install -y alien libaio1
 
 WORKDIR /tmp
+RUN git clone https://github.com/midnighttime-cha/oracle-client11.2.git client
 COPY client/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm /tmp
 RUN alien -i --scripts oracle-instantclient*.rpm
 RUN rm -f oracle-instantclient*.rpm
