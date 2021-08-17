@@ -5,7 +5,7 @@ RUN apt-get install -y alien libaio1
 
 WORKDIR /tmp
 RUN apt-get install -y wget
-RUN wget https://raw.githubusercontent.com/midnighttime-cha/oracle-client11.2/master/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
+RUN wget -c https://raw.githubusercontent.com/midnighttime-cha/oracle-client11.2/master/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
 # COPY ./client/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm /tmp
 RUN alien -i --scripts oracle-instantclient*.rpm
 RUN rm -f oracle-instantclient*.rpm
