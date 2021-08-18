@@ -6,8 +6,9 @@ import { LitigantModule } from './litigant/litigant.module';
 import { NoticeModule } from './notice/notice.module';
 import { ProceedModule } from './proceed/proceed.module';
 import { StatModule } from './stat/stat.module';
+import { PcLaborModule } from './pc-labor/pc-labor.module';
 
 @Module({
-  imports: [BailCollateralModule, CaseModule, FinanceModule, LitigantModule, NoticeModule, ProceedModule, StatModule]
+  imports: [BailCollateralModule, CaseModule, FinanceModule, LitigantModule, NoticeModule, ProceedModule, StatModule, PcLaborModule]
 })
 export class BusinessModule { }
