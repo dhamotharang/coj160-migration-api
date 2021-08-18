@@ -12,7 +12,7 @@ def FAILED_STAGE
 pipeline {
     agent none
     environment {
-        registryUrl = 'https://ghcr.io'
+        registryUrl = 'ghcr.io'
         registry = 'ghcr.io/dtdevteam/coj-migration-api'
         registryCredential = '645c564a-6e79-4ee1-9faa-62b3f6cba25a'
         dockerImage = ''
