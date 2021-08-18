@@ -91,7 +91,7 @@ export class MigrationLogService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find migration data fail] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[find migration data failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

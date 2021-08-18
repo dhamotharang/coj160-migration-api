@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from "@nestjs/common";
+import { HttpException, HttpStatus, Logger } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
 import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
@@ -23,16 +23,16 @@ export class PostgresMigrationLogs extends HelperService {
   async generateCode(): Promise<void> {
     try {
       const date = this.dateFormat("YYMMDD");
-      const response = await getManager().query(`SELECT "last_value" lastID FROM app.migration_logs_id_seq`);
-      this.code = `${date}${`${response[0].lastID}`.padStart(6, '0')}`;
+      const response = await getManager("postgresql").query(`SELECT "last_value" "lastID" FROM "${process.env.PG_SCHEMA}"."migration_logs_id_seq"`);
+      this.code = `${date}${`${response[0].lastID + 1}`.padStart(6, '0')}`;
     } catch (error) {
       throw new HttpException(`[migration log code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
   toResponseObject() {
-    const { id, name, serverType, status, datetime, sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationData } = this;
-    const responseObject = { id, name, serverType, status, datetime: this.dateFormat("YYYY-MM-DD H:i:s", datetime), sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationData };
+    const { id, code, name, serverType, status, datetime, sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationData } = this;
+    const responseObject = { id, code, name, serverType, status, datetime: this.dateFormat("YYYY-MM-DD H:i:s", datetime), sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationData };
     return responseObject;
   }
 }

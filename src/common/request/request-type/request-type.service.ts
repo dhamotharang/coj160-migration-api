@@ -56,8 +56,9 @@ export class RequestTypeService extends HelperService {
       if (typeof filters.sort !== "undefined") {
         const _sorts = `${filters.sort}`.split('-');
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
-      } else if (orders) {
-        await conditions.orderBy("requestTypeId", "DESC");
+      } else {
+        await conditions
+          .orderBy("A.requestTypeId", "DESC");
       }
 
       const getItems = await conditions.getMany();
@@ -161,6 +162,7 @@ export class RequestTypeService extends HelperService {
 
   async createData(payloadId: number, data: LookupRequestTypeDTO) {
     try {
+      Logger.log(data, "data");
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
       const created = await this.oracleLookupRequestTypeRepositories.create({ ...data, createdBy: payloadId, createdDate });
       await this.oracleLookupRequestTypeRepositories.save(created);
@@ -173,31 +175,19 @@ export class RequestTypeService extends HelperService {
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
       const source = await this.findMYSQLData();
-      Logger.log(source, "source");
+      let migrateLogs = {};
       if (await source.total > 0) {
-        await source.items.forEach(async element => {
+        for (let index = 0; index < source.items.length; index++) {
+          const element = source.items[index];
           const destination: any = await (await this.findORACLEOneData({ requestTypeName: `${element.reqTypeDesc}`.trim() })).items;
-          await Logger.log(destination, "destination");
+
           if (!destination) {
             const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
-            Logger.log({
+            const created = await this.createData(payloadId, {
               activeFlag: 1,
               courtId: parseInt(params.paramValue),
-              requestTypeName: element.reqTypeDesc,
-              createdBy: payloadId,
-              updatedBy: payloadId,
-              removedBy: 0
-            }, "created");
-            const created = await this.oracleLookupRequestTypeRepositories.create({
-              activeFlag: 1,
-              courtId: parseInt(params.paramValue),
-              requestTypeName: element.reqTypeDesc,
-              createdBy: payloadId,
-              updatedBy: payloadId,
-              removedBy: 0
+              requestTypeName: `${element.reqTypeDesc}`.trim(),
             });
-            await this.oracleLookupRequestTypeRepositories.save(created);
-            Logger.log(created, "created");
 
             const logData = {
               name: "รหัสประเภทคำร้อง",
@@ -213,12 +203,13 @@ export class RequestTypeService extends HelperService {
               destinationId: created.requestTypeId,
               destinationData: JSON.stringify(created)
             };
-            await this.migrateLogService.createPOSTGRESData(logData);
+            migrateLogs = await this.migrateLogService.createPOSTGRESData(logData);
           }
-        })
+        }
 
       }
 
+      return migrateLogs;
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

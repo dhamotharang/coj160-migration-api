@@ -20,7 +20,7 @@ export class OracleProceedAlertWitness {
   @Column({ name: "CASE_ID", comment: "รหัสคดี เชื่อมโยงตาราง PC_CASE" }) caseId: number;
   @Column({ name: "COURT_ID", comment: "รหัสศาล เชื่อมโยงตาราง PC_LOOKUP_COURT" }) courtId: number;
   @Column({ name: "DEFENDANT_NAME", comment: "ชื่อจำเลย" }) defendantName: string;
-  @Column({ name: "FULL_P_CASE		VARCHAR2	50 CHAR	N	", comment: "เลขที่คดีดำ" }) fullPCase: string;
+  @Column({ name: "FULL_P_CASE", comment: "เลขที่คดีดำ" }) fullPCase: string;
   @Column({ name: "OFFICER_ID", comment: "รหัสเจ้าหน้าที่" }) officerId: number;
   @Column({ name: "POSITION_ID", comment: "รหัสตำแหน่ง" }) positionId: number;
   @Column({ name: "RUNNING_NUMBER_ID", nullable: true, comment: "เลขที่คำสั่ง" }) runningNumberId: number;
@@ -30,9 +30,9 @@ export class OracleProceedAlertWitness {
   @Column({ name: "CREATED_BY", comment: "รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
   @Column({ name: "UPDATED_BY", nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
   @Column({ name: "REMOVED_BY", comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
-  @Column({ name: "CREATED_DATE", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
-  @Column({ name: "UPDATED_DATE", nullable: true, comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
-  @Column({ name: "REMOVED_DATE", nullable: true, comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
+  @Column({ name: "CREATED_DATE", type: "timestamp", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
+  @Column({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
+  @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
 
   toResponseObject() {
     const { alertWitnessId, orderNo, accuserName, address, addressMoo, addressNo, addressPostCode, addressProvince, addressRoad, addressSoi, addressSubDistrict, alertWitnessDate, alertWitnessNo, alertWitnessTime, offenseDetail, caseId, courtId, defendantName, fullPCase, officerId, positionId, runningNumberId, text, toWho, witnessOf, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;

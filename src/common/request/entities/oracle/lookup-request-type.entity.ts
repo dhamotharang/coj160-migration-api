@@ -21,7 +21,7 @@ export class OracleLookupRequestTypes {
   async beforeInsert() {
     try {
       const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_LOOKUP_REQUEST_TYPE_SEQ".nextval ID FROM DUAL`);
-      Logger.log(res, "res");
+      await Logger.log(res[0].ID, "res");
       this.requestTypeId = res[0].ID;
       this.orderNo = res[0].ID;
       this.requestTypeCode = `${res[0].ID}`.padStart(3, '0');

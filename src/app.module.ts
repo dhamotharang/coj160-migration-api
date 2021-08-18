@@ -18,6 +18,8 @@ import { ResponseModule } from './shared/response/response.module';
       entities: ['dist/**/**/oracle/*.entity{.ts,.js}'],
       synchronize: false,
       logging: true,
+      autoLoadEntities: true,
+      keepConnectionAlive: true,
     }),
     TypeOrmModule.forRoot({
       name: 'mysql',
