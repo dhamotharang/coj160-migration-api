@@ -39,9 +39,10 @@ pipeline {
                 echo 'Docker Push'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script {
-                    docker.withRegistry(registryUrl, registryCredential) {
-                        dockerImage.push()
-                    }
+                    dockerImage.push()
+                    // docker.withRegistry(registryUrl, registryCredential) {
+                    //     dockerImage.push()
+                    // }
                }
             }
         }
