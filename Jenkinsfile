@@ -14,7 +14,8 @@ pipeline {
     environment {
         registryUrl = 'ghcr.io'
         registry = 'ghcr.io/dtdevteam/coj-migration-api'
-        registryCredential = '645c564a-6e79-4ee1-9faa-62b3f6cba25a'
+        registryCredential = 'registry-gitlab'
+        // registryCredential = '645c564a-6e79-4ee1-9faa-62b3f6cba25a'
         dockerImage = ''
     }
 
