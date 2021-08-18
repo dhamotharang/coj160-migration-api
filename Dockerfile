@@ -19,6 +19,7 @@ RUN mkdir -p /app/files && chown -R node:node /app
 WORKDIR /app
 COPY package*.json ./
 COPY .env .env
+RUN yarn install && yarn build
 
 # RUN source .env
 COPY . .
@@ -31,10 +32,6 @@ RUN apt-get update \
   && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
-
-# RUN apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-
-RUN yarn install && yarn build
 
 # COPY dist ./
 USER node
