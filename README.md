@@ -1,7 +1,7 @@
 ```bash
 docker build -t ghcr.io/dtdevteam/coj-migration-api:latest .
 
-echo 'cc03d5c7759df0740ff85ffc1dd7410081da10ae' | docker login ghcr.io -u midnighttime-cha --password-stdin
+echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin
 
 docker push ghcr.io/dtdevteam/coj-migration-api:latest
 
