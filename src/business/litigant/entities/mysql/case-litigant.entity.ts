@@ -3,7 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
 
 @Entity({ name: "pcase_litigant" })
 
-export class CaseLitigants {
+export class MySQLCaseLitigants {
   @PrimaryColumn({ name: "lit_running", comment: "PRI	running คู่ความ" }) litRunning: number;
   @Column({ name: "court_running", comment: "ศาลเจ้าของข้อมูล" }) courtRunning: number;
   @Column({ name: "run_id", comment: "รหัสแทนหมายเลขคดีดำ" }) runId: number;

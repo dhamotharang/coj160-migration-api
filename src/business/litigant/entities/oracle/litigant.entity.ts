@@ -1,5 +1,6 @@
+import { Logger, HttpException, HttpStatus } from "@nestjs/common";
 import { OracleCases } from "src/business/case/entities/oracle/case.entity";
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, getManager, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: "PC_LITIGANT" })
 export class OracleLitigants {
@@ -46,6 +47,17 @@ export class OracleLitigants {
   @UpdateDateColumn({ name: "UPDATED_DATE", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_BY", default: 0, comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
   @DeleteDateColumn({ name: "REMOVED_DATE", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
+
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_LITIGANT_SEQ".nextval nextID FROM DUAL`);
+      this.litigantId = res[0].nextID;
+      this.orderNo = res[0].nextID;
+    } catch (error) {
+      throw new HttpException(`[generate code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
   @ManyToOne(type => OracleCases, cases => cases.caseId)
   @JoinColumn({ name: "CASE_ID" }) cases: OracleCases;

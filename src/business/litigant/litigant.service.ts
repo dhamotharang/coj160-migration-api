@@ -4,17 +4,21 @@ import { MigrationLogService } from 'src/common/migrate/migration-log/migration-
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { OracleLookupRequestSubjectDTO } from '../dto/oracle/lookup-request-subject.dto';
-import { MySQLRequestSubjects } from '../entities/mysql/request-subject.entity';
-import { OracleLookupRequestSubjects } from '../entities/oracle/lookup-request-subject.entity';
+import { CaseService } from '../case/case.service';
+import { OracleLitigantDTO } from './dto/litigant.dto';
+import { MySQLCaseLitigants } from './entities/mysql/case-litigant.entity';
+import { MySQLRequests } from './entities/mysql/request.entity';
+import { OracleLitigants } from './entities/oracle/litigant.entity';
 
 @Injectable()
-export class RequestSubjectService extends HelperService {
+export class LitigantService extends HelperService {
   constructor(
-    @InjectRepository(OracleLookupRequestSubjects) private readonly oracleLookUpRequestSubjectRepositories: Repository<OracleLookupRequestSubjects>,
-    @InjectRepository(MySQLRequestSubjects, "mysql") private readonly mySQLRequestSubjectsRepositories: Repository<MySQLRequestSubjects>,
+    @InjectRepository(OracleLitigants) private readonly oracleLitigantRepositories: Repository<OracleLitigants>,
+    @InjectRepository(MySQLCaseLitigants, "mysql") private readonly mysqlLitigantRepositories: Repository<MySQLCaseLitigants>,
+    // @InjectRepository(MySQLRequests, "mysql") private readonly mysqlRequestRepositories: Repository<MySQLRequests>,
     private readonly migrateLogService: MigrationLogService,
-    private readonly paramService: ParamService
+    private readonly paramService: ParamService,
+    private readonly caseService: CaseService
   ) {
     super();
   }
@@ -23,7 +27,7 @@ export class RequestSubjectService extends HelperService {
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
       const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
-      const conditions = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
+      const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
         .where("A.removedBy = 0");
 
       if (typeof text !== "undefined") {
@@ -78,7 +82,7 @@ export class RequestSubjectService extends HelperService {
   async findORACLEOneData(filters: any = null) {
     try {
       const { text, orderNo, dateFlag, requestSubjectName, activeFlag, courtId, selectCode } = filters;
-      const conditions = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
+      const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
         .where("A.requestSubjectId <> 0");
 
       if (typeof text !== "undefined") {
@@ -122,7 +126,7 @@ export class RequestSubjectService extends HelperService {
 
   async findMYSQLData(filters: any = null, pages: any = null, orders: any = null) {
     try {
-      const conditions = await this.mySQLRequestSubjectsRepositories.createQueryBuilder("A")
+      const conditions = await this.mysqlLitigantRepositories.createQueryBuilder("A")
         .where("A.subjectId <> 0");
 
       if (filters) {
@@ -178,14 +182,72 @@ export class RequestSubjectService extends HelperService {
     }
   }
 
+  /* async findMYSQLRequestData(filters: any = null, pages: any = null, orders: any = null) {
+    try {
+      const conditions = await this.mysqlRequestRepositories.createQueryBuilder("A")
+        .where("A.reqRunning <> 0");
+
+      if (filters) {
+        const { text, courtRunning, subjectName, udFlag, dateFlag, createDepCode } = filters;
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`A.subjectName LIKE '%${text}%'`)
+        }
+
+        if (typeof courtRunning !== "undefined") {
+          await conditions.andWhere("A.courtRunning = :courtRunning", { courtRunning });
+        }
+
+        if (typeof subjectName !== "undefined") {
+          await conditions.andWhere("A.subjectName = :subjectName", { subjectName });
+        }
+
+        if (typeof udFlag !== "undefined") {
+          await conditions.andWhere("A.udFlag = :udFlag", { udFlag });
+        }
+
+        if (typeof dateFlag !== "undefined") {
+          await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
+        }
+
+        if (typeof createDepCode !== "undefined") {
+          await conditions.andWhere("A.createDepCode = :createDepCode", { createDepCode });
+        }
+      }
+
+      const total = await conditions.getCount();
+
+      if (pages) {
+        await conditions
+          .skip(pages.start)
+          .take(pages.limit);
+      }
+
+      if (filters) {
+        if (typeof filters.sort !== "undefined") {
+          const _sorts = `${filters.sort}`.split('-');
+          await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
+        }
+      } else {
+        await conditions.orderBy("A.subjectId", "DESC");
+      }
+
+      const getItems = await conditions.getMany();
+      const items = await getItems.map(element => element.toResponseObject());
+
+      return { items, total };
+    } catch (error) {
+      throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  } */
+
 
 
   // POST Method
-  async createData(payloadId: number, data: OracleLookupRequestSubjectDTO) {
+  async createData(payloadId: number, data: OracleLitigantDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
-      const created = await this.oracleLookUpRequestSubjectRepositories.create({ ...data, createdBy: payloadId, createdDate, updatedDate: createdDate });
-      await this.oracleLookUpRequestSubjectRepositories.save(created);
+      const created = await this.oracleLitigantRepositories.create({ ...data, createdBy: payloadId, createdDate, updatedDate: createdDate });
+      await this.oracleLitigantRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
       throw new HttpException(`[create data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
@@ -199,38 +261,53 @@ export class RequestSubjectService extends HelperService {
       if (await source.total > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const element = source.items[index];
-          const destination: any = await (await this.findORACLEOneData({ requestSubjectName: `${element.subjectName}`.trim() })).items;
-
-          if (!destination) {
-            const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
-            const created = await this.createData(payloadId, {
-              requestSubjectName: `${element.subjectName}`.trim(),
-              courtId: parseInt(params.paramValue),
-              activeFlag: 1,
-            });
-
-            const logData = {
-              name: "เรื่องในคำคู่ความ",
-              serverType: `${process.env.SERVER_TYPE}`,
-              status: (created ? "SUCCESS" : "ERROR"),
-              datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-              sourceDBType: "MYSQL",
-              sourceTableName: "prequest_subject",
-              sourceId: element.subjectId,
-              sourceData: JSON.stringify(element),
-              destinationDBType: "ORACLE",
-              destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
-              destinationId: created.requestSubjectId,
-              destinationData: JSON.stringify(created)
-            };
-            migrateLogs = await this.migrateLogService.createPOSTGRESData(logData);
-          }
+          const destination: any = await (await this.caseService.findORACLEOneData({ convertStringCase: 1 })).items;
         }
       }
-
-      return migrateLogs;
     } catch (error) {
-      throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
+      throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
+
+  /*  async createMigrationData(payloadId: number, filters: any = null) {
+     try {
+       const source = await this.findMYSQLData();
+       let migrateLogs = {};
+       if (await source.total > 0) {
+         for (let index = 0; index < source.items.length; index++) {
+           const element = source.items[index];
+           const destination: any = await (await this.caseService.findORACLEOneData({ convertStringCase: `${element.subjectName}`.trim() })).items;
+ 
+           if (!destination) {
+             const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
+             const created = await this.createData(payloadId, {
+               requestSubjectName: `${element.subjectName}`.trim(),
+               courtId: parseInt(params.paramValue),
+               activeFlag: 1,
+             });
+ 
+             const logData = {
+               name: "เรื่องในคำคู่ความ",
+               serverType: `${process.env.SERVER_TYPE}`,
+               status: (created ? "SUCCESS" : "ERROR"),
+               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+               sourceDBType: "MYSQL",
+               sourceTableName: "prequest_subject",
+               sourceId: element.subjectId,
+               sourceData: JSON.stringify(element),
+               destinationDBType: "ORACLE",
+               destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
+               destinationId: created.requestSubjectId,
+               destinationData: JSON.stringify(created)
+             };
+             migrateLogs = await this.migrateLogService.createPOSTGRESData(logData);
+           }
+         }
+       }
+ 
+       return migrateLogs;
+     } catch (error) {
+       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
+     }
+   } */
 }

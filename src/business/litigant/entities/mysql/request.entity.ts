@@ -1,0 +1,88 @@
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+
+@Entity({ name: "prequest" })
+export class MySQLRequests {
+  @PrimaryGeneratedColumn({ name: "req_running", comment: "รหัสคำคู่ความ" }) reqRunning: number;
+  @Column({ name: "court_running", comment: "รหัสศาลเจ้าของระบบ" }) courtRunning: number;
+  @Column({ name: "run_id", comment: "รหัสแทนหมายเลขคดีดำ" }) runId: number;
+  @Column({ name: "appeal_running", comment: "runnig เลขที่อุทธรณ์ ฎีกา" }) appealRunning: number;
+  @Column({ name: "req_no", comment: "เลขที่อ้างอิง" }) reqNo: number;
+  @Column({ name: "req_yy", comment: "ปี" }) reqYy: number;
+  @Column({ name: "req_id", comment: "เลขที่คำร้อง" }) reqId: number;
+  @Column({ name: "req_desc", comment: "ประเภทคำร้อง" }) reqDesc: string;
+  @Column({ name: "subject_id", comment: "รหัสเรื่อง" }) subjectId: number;
+  @Column({ name: "subject_name", comment: "เรื่อง" }) subjectName: string;
+  @Column({ name: "date_rcv", comment: "วันที่รับคำร้อง" }) dateRcv: Date;
+  @Column({ name: "rcv_time", comment: "เวลาที่รับคำร้อง" }) rcvTime: string;
+  @Column({ name: "rcv_req", comment: "ผู้รับคำร้อง" }) rcvReq: string;
+  @Column({ name: "rcv_dep_code", comment: "หน่วยงานผู้รับคำร้อง" }) rcvDepCode: number;
+  @Column({ name: "req_type", type: "char", comment: "ประเภทผู้ยื่น" }) reqType: string;
+  @Column({ name: "sequence", comment: "ลำดับที่ผู้ยื่น" }) sequence: string;
+  @Column({ name: "req_name", comment: "ชื่อผู้ยื่น" }) reqName: string;
+  @Column({ name: "req_attach", comment: "ไฟล์แนบคำร้อง" }) reqAttach: string;
+  @Column({ name: "req_attach_date", type: "date", comment: "วันที่แนบไฟล์คำร้อง" }) reqAttachDate: Date;
+  @Column({ name: "dep_code_submit", comment: "หน่วยงานที่เสนอคำร้อง" }) depCodeSubmit: number;
+  @Column({ name: "user_submit_order", comment: "ผู้เสนอคำร้อง" }) userSubmitOrder: string;
+  @Column({ name: "submit_date", type: "date", comment: "วันที่เสนอคำร้อง" }) submitDate: Date;
+  @Column({ name: "submit_time", comment: "เวลาเสนอคำร้อง" }) submitTime: string;
+  @Column({ name: "dep_code_return", comment: "หน่วยงานที่รับคำร้อง" }) depCodeReturn: number;
+  @Column({ name: "user_return_order", comment: "ผู้รับคำร้อง" }) userReturnOrder: string;
+  @Column({ name: "return_date", type: "date", comment: "วันที่รับคำร้อง" }) returnDate: Date;
+  @Column({ name: "return_time", comment: "เวลาที่รับคำร้อง" }) returnTime: string;
+  @Column({ name: "order_id", comment: "รหัสคำสั่ง" }) orderId: number;
+  @Column({ name: "order_date", type: "date", comment: "วันที่สั่งคำร้อง" }) orderDate: Date;
+  @Column({ name: "order_time", comment: "เวลาที่สั่ง" }) orderTime: string;
+  @Column({ name: "req_order", type: "text", comment: "คำสั่ง" }) reqOrder: string;
+  @Column({ name: "sms_order", type: "text", comment: "ข้อความ SMS" }) smsOrder: string;
+  @Column({ name: "sms_flag", comment: "ส่ง sms" }) smsFlag: number;
+  @Column({ name: "order_judge_id", comment: "รหัสผู้พิพากษาที่สั่ง" }) orderJudgeId: string;
+  @Column({ name: "order_judge_name", comment: "ผู้พิพากษาที่สั่ง" }) orderJudgeName: string;
+  @Column({ name: "judge_id", comment: "ผู้พิพากษาที่สั่งคำร้อง" }) judgeId: string;
+  @Column({ name: "send_date", type: "date", comment: "วันที่ส่งคำร้อง" }) sendDate: Date;
+  @Column({ name: "send_time", comment: "เวลาส่งคำร้อง" }) sendTime: string;
+  @Column({ name: "send_to", comment: "ส่งคำร้องไปที่งาน" }) sendTo: number;
+  @Column({ name: "send_for", comment: "ส่งเพื่อ" }) sendFor: string;
+  @Column({ name: "remark", type: "text", comment: "หมายเหตุ" }) remark: string;
+  @Column({ name: "file_exists", comment: "ไฟล์คำสั่ง" }) fileExists: number;
+  @Column({ name: "check_flag", comment: "ตรวจสอบแล้ว" }) checkFlag: number;
+  @Column({ name: "check_user_id", comment: "รหัสผู้ตรวจสอบข้อมูล" }) checkUserId: string;
+  @Column({ name: "check_user_name", comment: "ชื่อผู้ตรวจสอบข้อมูล" }) checkUserName: string;
+  @Column({ name: "check_date", type: "date", comment: "วันที่ผู้ตรวจสอบข้อมูล" }) checkDate: Date;
+  @Column({ name: "court_level", comment: "คำคู่ความในชั้น 1: ศาลชั้นต้น 2: อุทธรณ์ 3: ฎีกา" }) courtLevel: number;
+  @Column({ name: "due_date", type: "date", comment: "อนุญาตให้จนถึงวันที่" }) dueDate: Date;
+  @Column({ name: "order_attach", comment: "ไฟล์แนบ" }) orderAttach: string;
+  @Column({ name: "attach_date", type: "date", comment: "วันที่แนบไฟล์" }) attachDate: Date;
+  @Column({ name: "order_flag", comment: "ลงลายเซ็นต์แล้ว" }) orderFlag: number;
+  @Column({ name: "print_flag", comment: "พิมพ์คำสั่งแล้ว" }) printFlag: number;
+  @Column({ name: "open_flag", comment: "xxxx" }) openFlag: number;
+  @Column({ name: "user_type_date", type: "datetime", comment: "วันที่บันทึกคำสั่ง" }) userTypeDate: Date;
+  @Column({ name: "user_type_order", comment: "ผู้บันทึกคำสั่งศาล" }) userTypeOrder: string;
+  @Column({ name: "user_type_order_name", comment: "ผู้บันทึกคำสั่งศาล" }) userTypeOrderName: string;
+  @Column({ name: "user_type_dep_code", comment: "หน่วยงานผู้บันทึกคำสั่งศาล" }) userTypeDepCode: number;
+  @Column({ name: "web_running", comment: "running คำร้องจากหน้าเว็บ" }) webRunning: number;
+  @Column({ name: "web_id", comment: "id คำคู่ความบนเว็บ" }) webId: number;
+  @Column({ name: "web_no", comment: "หมายเลขอ้างอิงคำคู่ความบนเว็บ" }) webNo: string;
+  @Column({ name: "create_dep_code", comment: "รหัสหน่วยงานที่สร้าง record" }) createDepCode: number;
+  @Column({ name: "create_user_id", comment: "รหัส user ที่สร้าง record" }) createUserId: string;
+  @Column({ name: "create_user", comment: "user ที่สร้าง record" }) createUser: string;
+  @Column({ name: "create_date", type: "datetime", comment: "วันที่เวลาสร้าง record" }) createDate: Date;
+  @Column({ name: "update_dep_code", comment: "รหัสหน่วยงานที่ update" }) updateDepCode: number;
+  @Column({ name: "update_user_id", comment: "รหัส user ที่ update record" }) updateUserId: string;
+  @Column({ name: "update_user", comment: "user ที่ update record" }) updateUser: string;
+  @Column({ name: "update_date", type: "datetime", comment: "วันที่ เวลา update record" }) updateDate: Date;
+  @Column({ name: "ref_law_court_flag", comment: "transfer from dbo_thlitigant to pappeal" }) refLawCourtFlag: string;
+  @Column({ name: "ref_date_start", comment: "transfer from dbo_thlitigant to pappeal" }) refDateStart: string;
+  @Column({ name: "ref_recno", comment: "reference Code" }) refRecno: string;
+  @Column({ name: "new_req_no", comment: "" }) newReqNo: number;
+  @Column({ name: "new_req_yy", comment: "" }) newReqYy: number;
+  @Column({ name: "ref_black_title", comment: "transfer" }) refBlackTitle: string;
+  @Column({ name: "ref_black_id", comment: "transfer" }) refBlackId: number;
+  @Column({ name: "ref_black_yy", comment: "transfer" }) refBlackYy: number;
+  @Column({ name: "ref_case_type", comment: "transfer" }) refCaseType: number;
+
+  toResponseObject() {
+    const { reqRunning, courtRunning, runId, appealRunning, reqNo, reqYy, reqId, reqDesc, subjectId, subjectName, dateRcv, rcvTime, rcvReq, rcvDepCode, reqType, sequence, reqName, reqAttach, reqAttachDate, depCodeSubmit, userSubmitOrder, submitDate, submitTime, depCodeReturn, userReturnOrder, returnDate, returnTime, orderId, orderDate, orderTime, reqOrder, smsOrder, smsFlag, orderJudgeId, orderJudgeName, judgeId, sendDate, sendTime, sendTo, sendFor, remark, fileExists, checkFlag, checkUserId, checkUserName, checkDate, courtLevel, dueDate, orderAttach, attachDate, orderFlag, printFlag, openFlag, userTypeDate, userTypeOrder, userTypeOrderName, userTypeDepCode, webRunning, webId, webNo, createDepCode, createUserId, createUser, createDate, updateDepCode, updateUserId, updateUser, updateDate, refLawCourtFlag, refDateStart, refRecno, newReqNo, newReqYy, refBlackTitle, refBlackId, refBlackYy, refCaseType } = this;
+    const responseObject = { reqRunning, courtRunning, runId, appealRunning, reqNo, reqYy, reqId, reqDesc, subjectId, subjectName, dateRcv, rcvTime, rcvReq, rcvDepCode, reqType, sequence, reqName, reqAttach, reqAttachDate, depCodeSubmit, userSubmitOrder, submitDate, submitTime, depCodeReturn, userReturnOrder, returnDate, returnTime, orderId, orderDate, orderTime, reqOrder, smsOrder, smsFlag, orderJudgeId, orderJudgeName, judgeId, sendDate, sendTime, sendTo, sendFor, remark, fileExists, checkFlag, checkUserId, checkUserName, checkDate, courtLevel, dueDate, orderAttach, attachDate, orderFlag, printFlag, openFlag, userTypeDate, userTypeOrder, userTypeOrderName, userTypeDepCode, webRunning, webId, webNo, createDepCode, createUserId, createUser, createDate, updateDepCode, updateUserId, updateUser, updateDate, refLawCourtFlag, refDateStart, refRecno, newReqNo, newReqYy, refBlackTitle, refBlackId, refBlackYy, refCaseType };
+    return responseObject;
+  }
+}
