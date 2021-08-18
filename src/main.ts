@@ -26,7 +26,7 @@ async function bootstrap() {
   const swaggerCustomOptions = {
     swaggerOptions: { docExpansion: 'list', defaultModelsExpandDepth: -1, filter: true, cacheControl: "no-cache" },
   };
-  const setVersion = '2.0 build 20210818.0159';
+  const setVersion = '2.0 build 20210819.0159';
 
   const config = new DocumentBuilder()
     .addServer(`${process.env.API_HOST}`, 'Local: COJ Migration')
