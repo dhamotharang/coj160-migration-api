@@ -23,8 +23,7 @@ export class PostgresMigrationLogs extends HelperService {
   async generateCode(): Promise<void> {
     try {
       const date = this.dateFormat("YYMMDD");
-      const response = await getManager("postgresql").query(`SELECT "last_value" "lastID" FROM "${process.env.PG_SCHEMA}"."migration_logs_id_seq"`);
-      this.code = `${date}${`${response[0].lastID + 1}`.padStart(6, '0')}`;
+      this.code = `${date}${`${this.id}`.padStart(4, '0')}`;
     } catch (error) {
       throw new HttpException(`[migration log code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

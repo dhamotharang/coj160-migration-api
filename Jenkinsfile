@@ -28,11 +28,7 @@ pipeline {
                 echo 'Docker Build'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script{
-                    try{
-                        dockerImage = docker.build registry + ":latest"
-                    }catch(err){
-                        notify(err)
-                    }
+                    dockerImage = docker.build registry + ":latest"
                 }
             }
         }
@@ -43,14 +39,9 @@ pipeline {
                 echo 'Docker Push'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script {
-                    try{
-                        docker.withRegistry(registryUrl, registryCredential) {
-                            dockerImage.push()
-                        }
-                    }catch(err){
-                        notify(err)
+                    docker.withRegistry(registryUrl, registryCredential) {
+                        dockerImage.push()
                     }
-                    
                }
             }
         }
@@ -61,11 +52,7 @@ pipeline {
                 echo 'delete docker images'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script{
-                    try{
-                        sh 'docker rmi '+ "${registry}:latest"
-                    }catch(err){
-                        throw err;
-                    }
+                    sh 'docker rmi '+ "${registry}:latest"
                 }
                 
             }
@@ -82,7 +69,6 @@ pipeline {
                         sh 'sh deploy.sh'
                         notify("API Deploy successfully !!")
                     }catch(err){
-                        notify(err);
                         throw err;
                     }
                 }
