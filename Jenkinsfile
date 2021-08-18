@@ -39,10 +39,12 @@ pipeline {
                 echo 'Docker Push'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script {
-                    dockerImage.push()
+                    // dockerImage.push()
                     // docker.withRegistry(registryUrl, registryCredential) {
                     //     dockerImage.push()
                     // }
+                    sh "echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin"
+                    sh 'docker push '+ "${registry}:latest"
                }
             }
         }
