@@ -17,7 +17,7 @@ import { ResponseModule } from './shared/response/response.module';
       connectString: `(DESCRIPTION=(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = ${process.env.ORA_HOST})(PORT = ${process.env.ORA_PORT})))(CONNECT_DATA=(SID=${process.env.ORA_SID})))`,
       entities: ['dist/**/**/oracle/*.entity{.ts,.js}'],
       synchronize: false,
-      logging: true,
+      logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
       autoLoadEntities: true,
       keepConnectionAlive: true,
     }),
@@ -31,7 +31,7 @@ import { ResponseModule } from './shared/response/response.module';
       database: `${process.env.MYSQL_DATABASE}`,
       entities: ['dist/**/**/mysql/*.entity{.ts,.js}'],
       synchronize: false,
-      logging: true,
+      logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
     }),
     TypeOrmModule.forRoot({
       name: 'postgresql',
@@ -51,7 +51,7 @@ import { ResponseModule } from './shared/response/response.module';
         },
       },
       synchronize: true,
-      logging: true,
+      logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
       autoLoadEntities: true,
       keepConnectionAlive: true
     }),

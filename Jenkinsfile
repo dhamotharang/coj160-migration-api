@@ -29,7 +29,11 @@ pipeline {
                 echo 'Docker Build'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script{
-                    dockerImage = docker.build registry + ":latest"
+                    try {
+                        dockerImage = docker.build registry + ":latest"
+                    } catch {
+                        throw err;
+                    }
                 }
             }
         }
@@ -40,12 +44,12 @@ pipeline {
                 echo 'Docker Push'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script {
-                    // dockerImage.push()
-                    // docker.withRegistry(registryUrl, registryCredential) {
-                    //     dockerImage.push()
-                    // }
-                    sh "echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin"
-                    sh 'docker push '+ "${registry}:latest"
+                    try {
+                        sh "echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin"
+                        sh 'docker push '+ "${registry}:latest"
+                    } catch {
+                        throw err;
+                    }
                }
             }
         }
@@ -56,7 +60,11 @@ pipeline {
                 echo 'delete docker images'
                 echo '------------------------------------------------------------------------------------------------------------'
                 script{
-                    sh 'docker rmi '+ "${registry}:latest"
+                    try{
+                        sh 'docker rmi '+ "${registry}:latest"
+                    } catch {
+                        throw err;
+                    }
                 }
                 
             }
