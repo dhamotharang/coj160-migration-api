@@ -22,8 +22,7 @@ export class PostgresMigrationLogs extends HelperService {
   @BeforeInsert()
   async generateCode(): Promise<void> {
     try {
-      const date = this.dateFormat("YYMMDD");
-      this.code = `${date}${`${this.id}`.padStart(4, '0')}`;
+      this.code = this.dateFormat("YYYYMMDDHism");
     } catch (error) {
       throw new HttpException(`[migration log code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

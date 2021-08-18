@@ -8,4 +8,4 @@ import { JudgeModule } from './judge/judge.module';
 @Module({
   imports: [RequestModule, MigrateModule, SettingModule, OrganizationModule, JudgeModule]
 })
-export class CommonModule {}
+export class CommonModule { }

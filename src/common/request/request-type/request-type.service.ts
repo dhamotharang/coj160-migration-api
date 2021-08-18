@@ -159,10 +159,9 @@ export class RequestTypeService extends HelperService {
 
 
 
-
+  // POST Method
   async createData(payloadId: number, data: LookupRequestTypeDTO) {
     try {
-      Logger.log(data, "data");
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
       const created = await this.oracleLookupRequestTypeRepositories.create({ ...data, createdBy: payloadId, createdDate });
       await this.oracleLookupRequestTypeRepositories.save(created);
@@ -190,7 +189,7 @@ export class RequestTypeService extends HelperService {
             });
 
             const logData = {
-              name: "รหัสประเภทคำร้อง",
+              name: "ประเภทคำร้อง",
               serverType: `${process.env.SERVER_TYPE}`,
               status: (created ? "SUCCESS" : "ERROR"),
               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),

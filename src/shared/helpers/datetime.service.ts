@@ -93,6 +93,7 @@ export class DatetimeService {
     const month = dt.slice(0, 2);
     const date = dt.slice(3, 5);
     const time = `${dt.slice(11)}`.trim();
+    const miliSecond = `${d.getMilliseconds()}`.padStart(3, '0');
 
     switch (type) {
       case 'YY':
@@ -166,6 +167,12 @@ export class DatetimeService {
         break;
       case 'YYYY-MM-DD H:i:s':
         date_str = `${year}-${month}-${date} ${time}`;
+        break;
+      case 'YYYYMMDDHis':
+        date_str = `${year}${month}${date}${time.split(':').join('')}`
+        break;
+      case 'YYYYMMDDHism':
+        date_str = `${year}${month}${date}${time.split(':').join('')}${miliSecond}`
         break;
       case 'DD/MM/YYYY H:i:s':
         date_str = `${date}/${month}/${year} ${time}`

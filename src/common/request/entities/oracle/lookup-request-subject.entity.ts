@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Logger, HttpException, HttpStatus } from "@nestjs/common";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_LOOKUP_REQUEST_SUBJECT" })
 export class OracleLookupRequestSubjects {
@@ -16,6 +17,19 @@ export class OracleLookupRequestSubjects {
   @Column({ name: "CREATED_DATE", type: "timestamp" }) createdDate: Date;
   @Column({ name: "UPDATED_DATE", type: "timestamp", nullable: true }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", type: "timestamp", nullable: true }) removedDate: Date;
+
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_LOOKUP_REQUEST_SUBJECT_SEQ".nextval ID FROM DUAL`);
+      this.requestSubjectId = res[0].ID;
+      this.orderNo = res[0].ID;
+      this.requestSubjectCode = `${res[0].ID}`.padStart(3, '0');
+      this.selectCode = `${res[0].ID}`.padStart(3, '0');
+    } catch (error) {
+      throw new HttpException(`[generate code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
   toResponseObject() {
     const { requestSubjectId, requestSubjectCode, requestSubjectName, orderNo, dateFlag, activeFlag, courtId, selectCode, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
