@@ -29,7 +29,12 @@ pipeline {
                 echo 'Docker Build'
                 echo '#############################################################################################################'
                 script{
-                    dockerImage = "${docker.build} ${registry} ${latest}"
+                    try {
+                        dockerImage = "${docker.build} ${registry} ${latest}"
+                    } catch(err){
+                        throw err;
+                    }
+                    
                 }
             }
         }
@@ -43,7 +48,7 @@ pipeline {
                     try {
                         sh "echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin"
                         sh 'docker push '+ "${registry}:latest"
-                    } catch {
+                    }catch(err){
                         throw err;
                     }
                }
@@ -58,7 +63,7 @@ pipeline {
                 script{
                     try{
                         sh 'docker rmi '+ "${registry}:latest"
-                    } catch {
+                    }catch(err){
                         throw err;
                     }
                 }
