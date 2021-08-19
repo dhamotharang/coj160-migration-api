@@ -46,7 +46,7 @@ pipeline {
                 echo '#############################################################################################################'
                 script {
                     try {
-                        sh "echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin"
+                        sh "echo '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' | docker login ghcr.io -u midnighttime-cha --password-stdin"
                         sh "docker push ${registry}:latest"
                     }catch(err){
                         throw err;
