@@ -30,7 +30,7 @@ pipeline {
                 echo '#############################################################################################################'
                 script{
                     try {
-                        dockerImage = "${docker.build} ${registry} ${latest}"
+                        dockerImage = "${docker.build} ${registry}:latest"
                     } catch(err){
                         throw err;
                     }
