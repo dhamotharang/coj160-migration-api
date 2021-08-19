@@ -35,10 +35,10 @@ export class LitigantController {
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 
-  /* @Post('migration')
+  @Post('migration')
   @Post()
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);
-  } */
+  }
 }

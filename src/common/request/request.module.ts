@@ -21,6 +21,7 @@ import { OracleLookupRequestSubjects } from './entities/oracle/lookup-request-su
     ], "mysql")
   ],
   controllers: [RequestTypeController, RequestSubjectController],
-  providers: [RequestTypeService, RequestSubjectService]
+  providers: [RequestTypeService, RequestSubjectService],
+  exports: [RequestTypeService, RequestSubjectService]
 })
 export class RequestModule { }

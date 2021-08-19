@@ -39,7 +39,7 @@ async function bootstrap() {
     .addTag('Authentication & Access')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document, swaggerCustomOptions);
+  SwaggerModule.setup('/', app, document, swaggerCustomOptions);
 
   await app.listen(port);
   await Logger.log("==============================")

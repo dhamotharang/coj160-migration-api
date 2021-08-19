@@ -1,10 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 
 export class OracleLitigantDTO {
-  @ApiProperty() litigantId: number;
   @ApiProperty() courtId: number;
   @ApiProperty() caseId: number;
-  @ApiProperty() orderNo: number;
   @ApiProperty() reqNo: number;
   @ApiProperty() reqNoYear: string;
   @ApiProperty() refNo: number;
@@ -24,24 +22,11 @@ export class OracleLitigantDTO {
   @ApiProperty() sendOrderDept: number;
   @ApiProperty() sendOrderDescription: string;
   @ApiProperty() notes: string;
-  @ApiProperty() propose: number;
-  @ApiProperty() proposeDate: Date;
-  @ApiProperty() proposeName: string;
-  @ApiProperty() proposeDepartment: number;
-  @ApiProperty() acceptRequest: number;
   @ApiProperty() acceptRequestDate: Date;
   @ApiProperty() acceptRequestName: string;
   @ApiProperty() acceptRequestDepartment: number;
   @ApiProperty() courtOrderRecordDate: Date;
   @ApiProperty() courtOrderRecordName: string;
   @ApiProperty() courtOrderRecordDepartment: number;
-  @ApiProperty() printById: number;
-  @ApiProperty() reqOrderId: number;
   @ApiProperty() litigantSubTypeName: string;
-  @ApiProperty() createdBy: number;
-  @ApiProperty() createdDate: Date;
-  @ApiProperty() updatedBy: number;
-  @ApiProperty() updatedDate: Date;
-  @ApiProperty() removedBy: number;
-  @ApiProperty() removedDate: Date;
 }

@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_LOOKUP_DEPARTMENT" })
 export class OracleLookupDepartments {
@@ -31,6 +32,19 @@ export class OracleLookupDepartments {
   @Column({ name: "REMOVED_DATE", type: "timestamp", nullable: true }) removedDate: Date;
   @Column({ name: "UPDATED_BY", nullable: true, default: 0 }) updatedBy: number;
   @Column({ name: "UPDATED_DATE", type: "timestamp", nullable: true }) updatedDate: Date;
+
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_LOOKUP_DEPARTMENT_SEQ".nextval nextID FROM DUAL`);
+      this.departmentId = res[0].nextID;
+      this.orderNo = res[0].nextID;
+      this.departmentCode = `${res[0].nextID}`.padStart(3, '0');
+      this.selectCode = `${res[0].nextID}`.padStart(3, '0');
+    } catch (error) {
+      throw new HttpException(`[generate code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
   toResponseObject() {
     const { departmentId, orderNo, activeFlag, address, bankId, bookAccount, bookAccountId, courtId, departmentCode, departmentName, districtId, moo, nameTor, postCode, programId, provinceId, road, selectCode, sendNo, soi, subDistrictId, tel, noticeTo, createdBy, createdDate, removedBy, removedDate, updatedBy, updatedDate } = this;
