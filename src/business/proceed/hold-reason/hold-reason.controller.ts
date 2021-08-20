@@ -1,15 +1,14 @@
 import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { OracleLookupRequestSubjectDTO } from 'src/common/request/dto/oracle/lookup-request-subject.dto';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { OracleLitigantDTO } from './dto/litigant.dto';
-import { LitigantService } from './litigant.service';
+import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
+import { HoldReasonService } from './hold-reason.service';
 
-@ApiTags("Litigant")
-@Controller('litigant')
-export class LitigantController {
+@ApiTags("Proceed: Hold reason")
+@Controller('holdReason')
+export class HoldReasonController {
   constructor(
-    private readonly mainService: LitigantService,
+    private readonly mainService: HoldReasonService,
     private readonly resdata: ResponseDataController
   ) { }
 
@@ -23,12 +22,13 @@ export class LitigantController {
     }
 
     const resdata = await this.mainService[`find${dbtype}Data`](query, null);
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
   }
 
   @Get(':start/:limit/pages')
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
+  @ApiQuery({ name: "dbtype" })
   @ApiQuery({ name: "dbtype" })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
@@ -47,16 +47,15 @@ export class LitigantController {
 
   // POST Method
   @Post()
-  async createData(@Res() res, @Req() req, @Body() body: OracleLitigantDTO) {
+  async createData(@Res() res, @Req() req, @Body() body: OracleProceedHoldReasonDTO) {
     Logger.log(body, "body");
     const resdata = await this.mainService.createData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 
   @Post('migration')
-  @Post()
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.length);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 }

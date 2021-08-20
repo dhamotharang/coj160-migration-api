@@ -32,6 +32,48 @@ export class LitigantService extends HelperService {
     super();
   }
 
+  // Filter zone
+  async oracleFilter(conditions, filters, moduleId: number = null) {
+    try {
+      if (moduleId) {
+        await conditions.andWhere("A.litigantId = :moduleId", { moduleId });
+      }
+
+      if (filters) {
+        const { text, dateFlag, activeFlag, orderNo, courtId, selectCode } = filters;
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%' OR A.courtOrderDetail LIKE '%${text}%')`)
+        }
+
+        if (typeof dateFlag !== "undefined") {
+          await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
+        }
+
+        if (typeof activeFlag !== "undefined") {
+          await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
+        }
+
+        if (typeof orderNo !== "undefined") {
+          await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
+        }
+
+        if (typeof courtId !== "undefined") {
+          await conditions.andWhere("A.courtId = :courtId", { courtId });
+        }
+
+        if (typeof selectCode !== "undefined") {
+          await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
+        }
+      }
+
+      return await conditions;
+    } catch (error) {
+      throw new HttpException(`[oracle: filter failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
+
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
@@ -40,29 +82,7 @@ export class LitigantService extends HelperService {
         .leftJoinAndSelect("A.cases", "B")
         .where("A.removedBy = 0");
 
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
-      }
-
-      if (typeof dateFlag !== "undefined") {
-        await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
-      }
-
-      if (typeof activeFlag !== "undefined") {
-        await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
-      }
-
-      if (typeof orderNo !== "undefined") {
-        await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-      }
-
-      if (typeof courtId !== "undefined") {
-        await conditions.andWhere("A.courtId = :courtId", { courtId });
-      }
-
-      if (typeof selectCode !== "undefined") {
-        await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
-      }
+      await this.oracleFilter(conditions, filters);
 
       const total = await conditions.getCount();
 
@@ -91,37 +111,10 @@ export class LitigantService extends HelperService {
 
   async findORACLEOneData(filters: any = null) {
     try {
-      const { text, orderNo, dateFlag, requestSubjectName, activeFlag, courtId, selectCode } = filters;
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
-        .where("A.requestSubjectId <> 0");
+        .where("A.litigantId <> 0");
 
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
-      }
-
-      if (typeof dateFlag !== "undefined") {
-        await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
-      }
-
-      if (typeof activeFlag !== "undefined") {
-        await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
-      }
-
-      if (typeof orderNo !== "undefined") {
-        await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-      }
-
-      if (typeof courtId !== "undefined") {
-        await conditions.andWhere("A.courtId = :courtId", { courtId });
-      }
-
-      if (typeof selectCode !== "undefined") {
-        await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
-      }
-
-      if (typeof requestSubjectName !== "undefined") {
-        await conditions.andWhere("A.requestSubjectName = :requestSubjectName", { requestSubjectName });
-      }
+      await this.oracleFilter(conditions, filters, (typeof filters.litigantId !== "undefined" ? filters.litigantId : null));
 
       const total = 1;
 
@@ -407,20 +400,20 @@ export class LitigantService extends HelperService {
               courtOrderRecordDepartment: department.departmentId,
               litigantSubTypeName: subjectName ? subjectName : "-",
             };
-            Logger.log(createData, "createData");
+
             const created = await this.createData(payloadId, createData);
 
             const logData = {
-              name: "เรื่องในคำคู่ความ",
+              name: "คำคู่ความ",
               serverType: `${process.env.SERVER_TYPE}`,
               status: (created ? "SUCCESS" : "ERROR"),
               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
               sourceDBType: "MYSQL",
-              sourceTableName: "prequest_subject",
+              sourceTableName: "pcase_litigant",
               sourceId: runId,
               sourceData: JSON.stringify(createData),
               destinationDBType: "ORACLE",
-              destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
+              destinationTableName: "PC_LITIGANT",
               destinationId: created.litigantId,
               destinationData: JSON.stringify(created)
             };

@@ -52,57 +52,57 @@ export class ResponseDataController extends HttpExceptionFilter {
     return responseItems;
   }
 
-  public async responseFindSuccess(req: any, res: any, items: any = [], total: any = 0, lang: string = 'EN', summary = null) {
+  public async responseFindSuccess(req: any, res: any, items: any = [], total: any = 0, lang: string = 'EN', state = {}, summary = null) {
     return await res.status(HttpStatus.OK)
       .json(
-        await this.responseData(req, (HttpStatus.OK ? 100 : 888), HttpStatus.OK, items, total, lang, {}, summary)
+        await this.responseData(req, (HttpStatus.OK ? 100 : 888), HttpStatus.OK, items, total, lang, state, summary)
       )
   }
 
-  public async responseFindOneSuccess(req: any, res: any, items: any, total: number = 0, lang: string = 'EN', summary = null) {
+  public async responseFindOneSuccess(req: any, res: any, items: any, total: number = 0, lang: string = 'EN', state = {}, summary = null) {
     return res.status(HttpStatus.OK)
       .json(
-        await this.responseData(req, (HttpStatus.OK ? 100 : 888), HttpStatus.OK, items ? items : {}, total, lang, {}, summary)
+        await this.responseData(req, (HttpStatus.OK ? 100 : 888), HttpStatus.OK, items ? items : {}, total, lang, state, summary)
       )
   }
 
-  public async responseAuthSuccess(req: any, res: any, items: any, total: number = 0, lang: string = 'EN') {
+  public async responseAuthSuccess(req: any, res: any, items: any, total: number = 0, lang: string = 'EN', state = {}) {
     if (!this.isEmpty(items)) {
       await this.addEventLog(req, items.access_token, true);
     }
     return res.status(HttpStatus.CREATED)
       .json(
-        await this.responseData(req, 100, HttpStatus.CREATED, items, (!this.isEmpty(items) ? 1 : total), lang)
+        await this.responseData(req, 100, HttpStatus.CREATED, items, (!this.isEmpty(items) ? 1 : total), lang, state)
       )
   }
 
-  public async responseCreateSuccess(req: any, res: any, items: any, msgCode: number = 100) {
+  public async responseCreateSuccess(req: any, res: any, items: any, msgCode: number = 100, total: number = 1, state = {}) {
     if (req.headers.authorization) {
       await this.addEventLog(req);
     }
     return res.status(HttpStatus.CREATED)
       .json(
-        await this.responseData(req, msgCode, HttpStatus.CREATED, items)
+        await this.responseData(req, msgCode, HttpStatus.CREATED, items, total, "TH", state)
       )
   }
 
-  public async responseUpdateSuccess(req: any, res: any, items: any) {
+  public async responseUpdateSuccess(req: any, res: any, items: any, total: number = 1, state = {}) {
     if (req.headers.authorization) {
       await this.addEventLog(req);
     }
     return res.status(HttpStatus.OK)
       .json(
-        await this.responseData(req, (HttpStatus.OK ? 100 : 300), HttpStatus.OK, items)
+        await this.responseData(req, (HttpStatus.OK ? 100 : 300), HttpStatus.OK, items, total, "TH", state)
       )
   }
 
-  public async responseDeleteSuccess(req: any, res: any, deleted: boolean = false) {
+  public async responseDeleteSuccess(req: any, res: any, deleted: boolean = false, total: number = 1, state = {}) {
     if (req.headers.authorization) {
       await this.addEventLog(req);
     }
     return res.status(HttpStatus.NO_CONTENT)
       .json(
-        await this.responseData(req, (deleted ? 100 : 400), HttpStatus.NO_CONTENT, deleted)
+        await this.responseData(req, (deleted ? 100 : 400), HttpStatus.NO_CONTENT, deleted, total, "TH", state)
       )
   }
 

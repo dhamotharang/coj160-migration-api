@@ -9,6 +9,15 @@ import { StatModule } from './stat/stat.module';
 import { PcLaborModule } from './pc-labor/pc-labor.module';
 
 @Module({
-  imports: [BailCollateralModule, CaseModule, FinanceModule, LitigantModule, NoticeModule, ProceedModule, StatModule, PcLaborModule]
+  imports: [
+    LitigantModule,
+    BailCollateralModule,
+    CaseModule,
+    FinanceModule,
+    NoticeModule,
+    ProceedModule,
+    StatModule,
+    PcLaborModule
+  ]
 })
 export class BusinessModule { }
