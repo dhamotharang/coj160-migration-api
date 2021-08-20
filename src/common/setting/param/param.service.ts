@@ -82,7 +82,7 @@ export class ParamService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[find one param failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 }

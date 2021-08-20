@@ -132,7 +132,7 @@ export class CaseService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find oracle one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find case one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

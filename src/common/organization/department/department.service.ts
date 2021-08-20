@@ -20,10 +20,10 @@ export class DepartmentService extends HelperService {
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
       const conditions = await this.oracleLookupDepartmentRepositories.createQueryBuilder("A")
-        .where("A.depCode <> 0");
+        .where("A.departmentId <> 0");
 
       if (filters) {
-        const { text, departmentId, departmentName, orderNo, activeFlag, address, bankId } = filters;
+        const { text, departmentId, orderNo, activeFlag, address, bankId, courtId, departmentCode } = filters;
 
         if (typeof text !== "undefined") {
           await conditions.andWhere(`(A.departmentName LIKE '%${text}%' OR A.address LIKE '%${text}%')`)
@@ -41,12 +41,20 @@ export class DepartmentService extends HelperService {
           await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
         }
 
-        if (typeof departmentName !== "undefined") {
-          await conditions.andWhere("A.departmentName = :departmentName", { departmentName });
+        if (typeof address !== "undefined") {
+          await conditions.andWhere("A.address = :address", { address });
         }
 
         if (typeof bankId !== "undefined") {
           await conditions.andWhere("A.bankId = :bankId", { bankId });
+        }
+
+        if (typeof courtId !== "undefined") {
+          await conditions.andWhere("A.courtId = :courtId", { courtId });
+        }
+
+        if (typeof departmentCode !== "undefined") {
+          await conditions.andWhere("A.departmentCode = :departmentCode", { departmentCode });
         }
       }
 
@@ -64,7 +72,7 @@ export class DepartmentService extends HelperService {
           await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
         }
       } else {
-        await conditions.orderBy("A.depCode", "DESC");
+        await conditions.orderBy("A.departmentId", "DESC");
       }
 
       const getItems = await conditions.getMany();
@@ -79,7 +87,7 @@ export class DepartmentService extends HelperService {
   async findORACLEOneData(departmentId: number = null, filters: any = null) {
     try {
       const conditions = await this.oracleLookupDepartmentRepositories.createQueryBuilder("A")
-        .where("A.offId <> 0");
+        .where("A.departmentId <> 0");
 
       if (departmentId) {
         await conditions.andWhere("A.departmentId = :departmentId", { departmentId });
@@ -110,11 +118,11 @@ export class DepartmentService extends HelperService {
       }
 
       const getItems = await conditions.getOne();
-      const items = await getItems.toResponseObject();
+      const items = await getItems ? getItems.toResponseObject() : null;
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find mysql one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find department one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -173,14 +181,14 @@ export class DepartmentService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[find department mysql failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
   async findMYSQLOneData(depCode: number = null, filters: any = null) {
     try {
       const conditions = await this.mysqlDepartmentRepositories.createQueryBuilder("A")
-        .where("A.offId <> 0");
+        .where("A.depCode <> 0");
 
       if (depCode) {
         await conditions.andWhere("A.depCode = :depCode", { depCode });
@@ -211,11 +219,11 @@ export class DepartmentService extends HelperService {
       }
 
       const getItems = await conditions.getOne();
-      const items = await getItems.toResponseObject();
+      const items = await getItems ? getItems.toResponseObject() : null;
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find mysql one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find department one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -227,7 +235,7 @@ export class DepartmentService extends HelperService {
       await this.oracleLookupDepartmentRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[create data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create department failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 }

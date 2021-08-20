@@ -123,7 +123,7 @@ export class UserProfileService {
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find mysql one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find user profile one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

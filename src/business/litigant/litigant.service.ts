@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { DepartmentService } from 'src/common/organization/department/department.service';
@@ -37,6 +37,7 @@ export class LitigantService extends HelperService {
     try {
       const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
+        .leftJoinAndSelect("A.cases", "B")
         .where("A.removedBy = 0");
 
       if (typeof text !== "undefined") {
@@ -76,15 +77,15 @@ export class LitigantService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.requestSubjectId", "DESC");
+          .orderBy("A.litigantId", "DESC");
       }
 
       const getItems = await conditions.getMany();
-      const items = await getItems.map(element => element.toResponseObject());
+      const items = await getItems.map(element => element.toResponseObject(true));
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find oracle data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find litigant data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -125,7 +126,7 @@ export class LitigantService extends HelperService {
       const total = 1;
 
       const getItems = await conditions.getOne();
-      const items = await (getItems ? getItems.toResponseObject() : null);
+      const items = await (getItems ? getItems.toResponseObject(true) : null);
 
       return { items, total };
     } catch (error) {
@@ -249,7 +250,7 @@ export class LitigantService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find request failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -299,7 +300,7 @@ export class LitigantService extends HelperService {
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find mysql one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[find mysql one litigant failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -313,7 +314,7 @@ export class LitigantService extends HelperService {
       await this.oracleLitigantRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[create data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create litigant data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -336,13 +337,42 @@ export class LitigantService extends HelperService {
           const myDepartments: any = await (await this.departmentService.findMYSQLOneData(depCodeSubmit)).items;// ค้นหา หน่วยงาน (MySql)
           const orDepartments = await (await this.departmentService.findORACLEOneData(null, { departmentName: myDepartments.depName })).items;// ค้นหา หน่วยงาน (MySql)
           const myJudges = await (await this.officerService.findMYSQLOneData(parseInt(userReturnOrder))).items; // ค้นหา พนักงาน (MySql)
-          const orJudges = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: myJudges.offName })).items; // ค้นหา พนักงาน (MySql)
+          const orJudges = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${myJudges.offName}`.trim() })).items; // ค้นหา พนักงาน (MySql)
 
           let department: any = {};
           if (orDepartments) {
             department = orDepartments;
           } else {
             department = await this.prepareCreateDepartment(myDepartments, parseInt(params.paramValue));
+          }
+
+          if (!cases) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(cases, "cases");
+          }
+          if (!requestTypes) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(requestTypes, "requestTypes");
+          }
+          if (!officers) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(officers, "officers");
+          }
+          if (!myDepartments) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(myDepartments, "myDepartments");
+          }
+          if (!orDepartments) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(orDepartments, "orDepartments");
+          }
+          if (!myJudges) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(myJudges, "myJudges");
+          }
+          if (!orJudges) {
+            Logger.log("########################################################################", "NULL_DATA");
+            Logger.log(orJudges, "orJudges");
           }
 
           if (cases) {
@@ -352,32 +382,32 @@ export class LitigantService extends HelperService {
               caseId: parseInt(`${cases.caseId}`),
               reqNo: parseInt(`${reqNo}`),
               reqNoYear: `${reqYY}`,
-              refNo: parseInt(sequence),
+              refNo: sequence ? parseInt(sequence) : null,
               refNoYear: `${reqYY}`,
-              litigantTypeId: parseInt(`${requestTypes ? requestTypes.requestTypeId : 1}`),
+              litigantTypeId: requestTypes ? parseInt(`${requestTypes.requestTypeId}`) : 1,
               litigantSubTypeCode: `${requestTypes ? requestTypes.requestTypeId : null}`,
               reqDescription: `${reqDesc ? reqDesc : "-"}`,
-              reqDate: new Date(returnDate),
-              reqReceivedBy: parseInt(`${orJudges ? orJudges.userProfileId : null}`),
+              reqDate: this.dateFormat("YYYY-MM-DD H:i:s", returnDate),
+              reqReceivedBy: orJudges ? parseInt(`${orJudges.userProfileId}`) : null,
               reqName: `${reqName ? reqName : "-"}`,
               submitReqBy: 0,
-              submitDate: new Date(submitDate ? submitDate : null),
+              submitDate: submitDate ? this.dateFormat("YYYY-MM-DD H:i:s", submitDate) : null,
               courtOrderDetail: `${reqOrder ? reqOrder : "-"}`,
-              courtOrderDate: new Date(orderDate ? orderDate : null),
-              judgeId: parseInt(judgeId),
-              sendOrderDate: new Date(sendDate ? sendDate : null),
+              courtOrderDate: orderDate ? this.dateFormat("YYYY-MM-DD H:i:s", orderDate) : null,
+              judgeId: orJudges ? parseInt(`${orJudges.userProfileId}`) : null,
+              sendOrderDate: sendDate ? this.dateFormat("YYYY-MM-DD H:i:s", sendDate) : null,
               sendOrderDept: 0,
               sendOrderDescription: `${sendFor ? sendFor : "-"}`,
               notes: `${remark ? remark : "-"}`,
-              acceptRequestDate: new Date(dateRcv),
+              acceptRequestDate: dateRcv ? this.dateFormat("YYYY-MM-DD H:i:s", dateRcv) : null,
               acceptRequestName: officers ? officers.offName : "-",
               acceptRequestDepartment: parseInt(department.departmentId),
-              courtOrderRecordDate: new Date(userTypeDate),
+              courtOrderRecordDate: userTypeDate ? this.dateFormat("YYYY-MM-DD H:i:s", userTypeDate) : null,
               courtOrderRecordName: userTypeOrderName,
               courtOrderRecordDepartment: department.departmentId,
               litigantSubTypeName: subjectName ? subjectName : "-",
             };
-
+            Logger.log(createData, "createData");
             const created = await this.createData(payloadId, createData);
 
             const logData = {
@@ -401,7 +431,7 @@ export class LitigantService extends HelperService {
 
       return migrateLogs;
     } catch (error) {
-      throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: litigant migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -418,7 +448,7 @@ export class LitigantService extends HelperService {
 
       return await this.departmentService.createData(999, createObject);
     } catch (error) {
-      throw new HttpException(`[prepare department data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: prepare for create department data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

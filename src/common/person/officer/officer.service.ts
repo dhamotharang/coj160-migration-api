@@ -86,7 +86,7 @@ export class OfficerService extends HelperService {
       }
 
       if (filters) {
-        const { text, offId, courtRunning, offName, depCode, postId, postLevelId } = filters;
+        const { text, courtRunning, offName, depCode, postId, postLevelId } = filters;
 
         if (typeof text !== "undefined") {
           await conditions.andWhere(`A.offName LIKE '%${text}%'`)
@@ -114,11 +114,11 @@ export class OfficerService extends HelperService {
       }
 
       const getItems = await conditions.getOne();
-      const items = await getItems.toResponseObject();
+      const items = await getItems ? getItems.toResponseObject() : null;
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find officer failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

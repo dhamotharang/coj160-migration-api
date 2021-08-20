@@ -24,6 +24,8 @@ export class MigrationLogController {
   }
 
   @ApiQuery({ name: "text", required: false })
+  @ApiQuery({ name: "sourceTableName", required: false })
+  @ApiQuery({ name: "destinationTableName", required: false })
   @ApiParam({ name: "start" })
   @ApiParam({ name: "limit" })
   @Get(':start/:limit/pages')

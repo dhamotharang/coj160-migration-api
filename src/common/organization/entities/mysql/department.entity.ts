@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
-@Entity({ name: "" })
+@Entity({ name: "pdepartment" })
 export class MySQLDepartments {
   @PrimaryColumn({ name: "dep_code", comment: "รหัสหน่วยงาน" }) depCode: number;
   @PrimaryColumn({ name: "court_running", comment: "รหัสศาลเจ้าของระบบ" }) courtRunning: number;
