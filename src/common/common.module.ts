@@ -5,8 +5,9 @@ import { SettingModule } from './setting/setting.module';
 import { OrganizationModule } from './organization/organization.module';
 import { JudgeModule } from './judge/judge.module';
 import { PersonModule } from './person/person.module';
+import { AppointModule } from './appoint/appoint.module';
 
 @Module({
-  imports: [RequestModule, MigrateModule, SettingModule, OrganizationModule, JudgeModule, PersonModule]
+  imports: [RequestModule, MigrateModule, SettingModule, OrganizationModule, JudgeModule, PersonModule, AppointModule]
 })
 export class CommonModule { }

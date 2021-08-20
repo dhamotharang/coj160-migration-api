@@ -29,8 +29,11 @@ export class PostgresMigrationLogs extends HelperService {
   }
 
   toResponseObject() {
-    const { id, code, name, serverType, status, datetime, sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationData } = this;
-    const responseObject = { id, code, name, serverType, status, datetime: this.dateFormat("YYYY-MM-DD H:i:s", datetime), sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationData };
+    const { id, code, name, serverType, status, datetime, sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationId, destinationData } = this;
+    const responseObject = {
+      id, code, name, serverType, status, datetime: this.dateFormat("YYYY-MM-DD H:i:s", datetime),
+      sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationId, destinationData
+    };
     return responseObject;
   }
 }
