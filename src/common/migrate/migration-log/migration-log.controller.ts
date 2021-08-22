@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
-import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { MigrationLogService } from './migration-log.service';
 
@@ -13,6 +14,8 @@ export class MigrationLogController {
 
   // GET Method
   @Get()
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -28,6 +31,9 @@ export class MigrationLogController {
   @ApiQuery({ name: "destinationTableName", required: false })
   @ApiParam({ name: "start" })
   @ApiParam({ name: "limit" })
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   @Get(':start/:limit/pages')
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     const { start, limit } = param;

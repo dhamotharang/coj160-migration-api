@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res } from '@nestjs/common';
-import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
 import { HoldReasonService } from './hold-reason.service';
@@ -14,7 +15,8 @@ export class HoldReasonController {
 
   // Get Method
   @Get()
-  @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -28,8 +30,8 @@ export class HoldReasonController {
   @Get(':start/:limit/pages')
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
-  @ApiQuery({ name: "dbtype" })
-  @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Pages" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -47,6 +49,9 @@ export class HoldReasonController {
 
   // POST Method
   @Post()
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   async createData(@Res() res, @Req() req, @Body() body: OracleProceedHoldReasonDTO) {
     Logger.log(body, "body");
     const resdata = await this.mainService.createData(999, body);
@@ -54,6 +59,9 @@ export class HoldReasonController {
   }
 
   @Post('migration')
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);

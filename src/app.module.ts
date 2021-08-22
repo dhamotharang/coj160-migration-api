@@ -6,6 +6,7 @@ import { CommonModule } from './common/common.module';
 import { BusinessModule } from './business/business.module';
 import { HelpersModule } from './shared/helpers/helpers.module';
 import { ResponseModule } from './shared/response/response.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { ResponseModule } from './shared/response/response.module';
     ResponseModule,
     BusinessModule,
     CommonModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

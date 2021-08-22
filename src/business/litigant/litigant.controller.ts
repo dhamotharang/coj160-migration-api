@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res } from '@nestjs/common';
-import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { OracleLookupRequestSubjectDTO } from 'src/common/request/dto/oracle/lookup-request-subject.dto';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OracleLitigantDTO } from './dto/litigant.dto';
 import { LitigantService } from './litigant.service';
@@ -15,7 +16,8 @@ export class LitigantController {
 
   // Get Method
   @Get()
-  @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -30,6 +32,7 @@ export class LitigantController {
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
   @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Page" })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -47,6 +50,9 @@ export class LitigantController {
 
   // POST Method
   @Post()
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   async createData(@Res() res, @Req() req, @Body() body: OracleLitigantDTO) {
     Logger.log(body, "body");
     const resdata = await this.mainService.createData(999, body);
@@ -54,7 +60,9 @@ export class LitigantController {
   }
 
   @Post('migration')
-  @Post()
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.length);

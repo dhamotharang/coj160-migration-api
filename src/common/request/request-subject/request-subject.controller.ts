@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Logger, Post, Query, Req, Res } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Logger, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OracleLookupRequestSubjectDTO } from '../dto/oracle/lookup-request-subject.dto';
 import { RequestSubjectService } from './request-subject.service';
@@ -14,7 +15,10 @@ export class RequestSubjectController {
 
   // Get Method
   @Get()
-  @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -28,6 +32,9 @@ export class RequestSubjectController {
 
   // POST Method
   @Post()
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   async createData(@Res() res, @Req() req, @Body() body: OracleLookupRequestSubjectDTO) {
     Logger.log(body, "body");
     const resdata = await this.mainService.createData(999, body);
@@ -35,7 +42,9 @@ export class RequestSubjectController {
   }
 
   @Post('migration')
-  @Post()
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);

@@ -1,12 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Request, Post, UseGuards, Body } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { LocalAuthGuard } from './auth/local-auth.guard';
+import { PostgresUserAuthDTO } from './common/person/dto/user.dto';
 
+@ApiTags("Authentication & Access")
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) { }
 
-  /* @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  } */
+  @UseGuards(LocalAuthGuard)
+  @ApiOperation({ summary: "เข้าสู่ระบบ" })
+  @Post('auth/login')
+  async login(@Request() req, @Body() body: PostgresUserAuthDTO) {
+    return req.user;
+  }
 }

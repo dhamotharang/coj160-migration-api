@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
-import { ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { DepartmentService } from './department.service';
 
@@ -27,7 +28,8 @@ export class DepartmentController {
   @Get(':start/:limit/pages')
   @ApiParam({ name: "start" })
   @ApiParam({ name: "limit" })
-  @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด แบบ Page" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {

@@ -1,5 +1,6 @@
-import { Controller, Get, Query, Req, Res } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OfficerService } from './officer.service';
 
@@ -13,7 +14,8 @@ export class OfficerController {
 
   // Get Method
   @Get()
-  @ApiQuery({ name: "dbtype" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
