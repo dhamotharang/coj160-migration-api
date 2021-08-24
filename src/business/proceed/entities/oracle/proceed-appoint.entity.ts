@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_PROCEED_APPOINT" })
 export class OracleProceedAppoints {
@@ -35,6 +36,17 @@ export class OracleProceedAppoints {
   @Column({ name: "CREATED_DATE", type: "timestamp", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
   @Column({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
+
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_PROCEED_APPOINT_SEQ".nextval ID FROM DUAL`);
+      this.appointId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
   toResponseObject() {
     const { appointId, createdBy, createdDate, orderNo, removedBy, removedDate, updatedBy, updatedDate, offenseDetail, appointById, appointDepartment, arrest, arrestDate, caseId, investigateAccuser, investigateAccuserDate, investigateDefendent, investigateDefendentDate, investigateOther, investigateOtherDate, investigateOtherDetail, lawyerClaimId, lawyerDefendantId, noArrest, noJudge, ownerDate, plaintiffId, plaintiffType, reasonAppointId, release, roomId, twoJudge, isElectronicFiling } = this;

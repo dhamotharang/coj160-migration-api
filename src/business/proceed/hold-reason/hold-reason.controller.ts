@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AppointDelayService } from 'src/business/appoint/appoint-delay/appoint-delay.service';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
@@ -9,8 +10,8 @@ import { HoldReasonService } from './hold-reason.service';
 @Controller('holdReason')
 export class HoldReasonController {
   constructor(
-    private readonly mainService: HoldReasonService,
-    private readonly resdata: ResponseDataController
+    private mainService: HoldReasonService,
+    private resdata: ResponseDataController
   ) { }
 
   // Get Method

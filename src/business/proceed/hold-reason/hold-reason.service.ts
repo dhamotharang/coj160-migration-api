@@ -1,22 +1,21 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AppointDelayService } from 'src/business/appoint/appoint-delay/appoint-delay.service';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
 import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
-import { MySQLAppointDelays } from '../entities/mysql/pappoint-delay.entity';
 import { OracleProceedHoldReasons } from '../entities/oracle/proceed-hold-reason.entity';
 
 @Injectable()
 export class HoldReasonService extends HelperService {
   constructor(
     @InjectRepository(OracleProceedHoldReasons)
-    private readonly oracleProceedHoldReasonsRepositories: Repository<OracleProceedHoldReasons>,
-    @InjectRepository(MySQLAppointDelays, "mysql")
-    private readonly mysqlAppointDelayRepositories: Repository<MySQLAppointDelays>,
-    private readonly paramService: ParamService,
-    private readonly migrateLogService: MigrationLogService,
+    private oracleProceedHoldReasonsRepositories: Repository<OracleProceedHoldReasons>,
+    private paramService: ParamService,
+    private migrateLogService: MigrationLogService,
+    private appointDelayService: AppointDelayService,
   ) {
     super();
   }
@@ -164,67 +163,11 @@ export class HoldReasonService extends HelperService {
   }
 
   async findMYSQLData(filters: any = null, pages: any = null) {
-    try {
-      const conditions = await this.mysqlAppointDelayRepositories.createQueryBuilder("A");
-
-      await this.mysqlFilter(conditions, filters);
-
-      const total = await conditions.getCount();
-
-      if (pages) {
-        await conditions
-          .skip(pages.start)
-          .take(pages.limit);
-      }
-
-      if (filters) {
-        if (typeof filters.sort !== "undefined") {
-          const _sorts = `${filters.sort}`.split('-');
-          await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
-        }
-      } else {
-        await conditions.orderBy("A.subjectId", "DESC");
-      }
-
-      const getItems = await conditions.getMany();
-      const items = await getItems.map(element => element.toResponseObject());
-
-      return { items, total };
-    } catch (error) {
-      throw new HttpException(`[mysql: find hold reason data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
-    }
+    return await this.appointDelayService.findMYSQLData(filters, pages);
   }
 
-  async findMYSQLOneData(filters: any = null, pages: any = null, moduleId: number = 0) {
-    try {
-      const conditions = await this.mysqlAppointDelayRepositories.createQueryBuilder("A");
-
-      await this.mysqlFilter(conditions, filters, moduleId);
-
-      const total = await conditions.getCount();
-
-      if (pages) {
-        await conditions
-          .skip(pages.start)
-          .take(pages.limit);
-      }
-
-      if (filters) {
-        if (typeof filters.sort !== "undefined") {
-          const _sorts = `${filters.sort}`.split('-');
-          await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
-        }
-      } else {
-        await conditions.orderBy("A.delayId", "DESC");
-      }
-
-      const getItems = await conditions.getMany();
-      const items = await getItems.map(element => element.toResponseObject());
-
-      return { items, total };
-    } catch (error) {
-      throw new HttpException(`[mysql: find hold reason one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
-    }
+  async findMYSQLOneData(filters: any = null, moduleId: number = 0) {
+    return await this.appointDelayService.findMYSQLOneData(filters, moduleId);
   }
 
 
@@ -246,7 +189,7 @@ export class HoldReasonService extends HelperService {
     try {
       let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
-      const source = await this.findMYSQLOneData(); // ดึงค่าคำคู่ความฝั่ง MySQL
+      const source = await this.appointDelayService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
 
       if (params && await source.total > 0) {
         for (let index = 0; index < source.items.length; index++) {

@@ -7,6 +7,7 @@ import { NoticeModule } from './notice/notice.module';
 import { ProceedModule } from './proceed/proceed.module';
 import { StatModule } from './stat/stat.module';
 import { PcLaborModule } from './pc-labor/pc-labor.module';
+import { AppointModule } from './appoint/appoint.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { PcLaborModule } from './pc-labor/pc-labor.module';
     NoticeModule,
     ProceedModule,
     StatModule,
-    PcLaborModule
+    PcLaborModule,
+    AppointModule,
   ]
 })
 export class BusinessModule { }
