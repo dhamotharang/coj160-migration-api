@@ -13,7 +13,7 @@ export class AppointTableService extends HelperService {
   constructor(
     @InjectRepository(OracleLookupAppointTables)
     private readonly oracleLookupAppointTableRepositories: Repository<OracleLookupAppointTables>,
-    @InjectRepository(MySQLAppointTables)
+    @InjectRepository(MySQLAppointTables, "mysql")
     private readonly mysqlAppointTablesTableRepositories: Repository<MySQLAppointTables>,
     private readonly paramService: ParamService,
     private readonly migrateLogService: MigrationLogService,

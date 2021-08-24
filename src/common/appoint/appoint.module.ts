@@ -6,6 +6,7 @@ import { OracleLookupAppointLists } from './entities/oracle/lookup-appoint-list.
 import { AppointTableController } from './appoint-table/appoint-table.controller';
 import { AppointTableService } from './appoint-table/appoint-table.service';
 import { OracleLookupAppointTables } from './entities/oracle/lookup-appoint-table.entity';
+import { MySQLAppointTables } from './entities/mysql/appoint-table.entity';
 
 @Module({
   imports: [
@@ -13,6 +14,9 @@ import { OracleLookupAppointTables } from './entities/oracle/lookup-appoint-tabl
       OracleLookupAppointLists,
       OracleLookupAppointTables
     ]),
+    TypeOrmModule.forFeature([
+      MySQLAppointTables,
+    ], "mysql"),
   ],
   controllers: [AppointListController, AppointTableController],
   providers: [AppointListService, AppointTableService],
