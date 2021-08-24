@@ -33,8 +33,6 @@ pipeline {
                     try {
                         echo 'Yarn Install'
                         echo '------------------------------------------------------------------------------------------------------------'
-                        sh 'node --version'
-                        sh 'yarn --version'
                         sh 'yarn install'
                     }catch (Exception err) {
                         notify("${e.getMessage()}");
@@ -76,7 +74,6 @@ pipeline {
                 echo '#############################################################################################################'
                 script{
                     try {
-                        // dockerImage = "${docker.build} ${registry}:latest"
                         sh "docker build -t ${registry}:latest ."
                     } catch(err){
                         throw err;
