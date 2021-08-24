@@ -20,6 +20,52 @@ pipeline {
     }
 
     stages {
+        stage('Yarn Install') {
+            agent {
+                docker {
+                    image 'node:15.11.0-slim'
+                    args '-u 0:0'
+                }
+            }
+
+            steps {
+                script {
+                    try {
+                        echo 'Yarn Install'
+                        echo '------------------------------------------------------------------------------------------------------------'
+                        sh 'node --version'
+                        sh 'yarn --version'
+                        sh 'yarn install'
+                    }catch (Exception err) {
+                        notify("${e.getMessage()}");
+                        throw e; 
+                    }
+                }
+            }
+        }
+        stage('Yarn Build') {
+
+            agent {
+                docker {
+                    image 'node:15.11.0-slim'
+                    args '-u 0:0'
+                }
+            }
+
+            steps {
+                script {
+                    try {
+                        echo 'Yarn Build'
+                        echo '------------------------------------------------------------------------------------------------------------'
+                        sh 'yarn build'
+                        sh 'chmod -R 777 .'
+                    }catch(err){
+                        notify("${e.getMessage()}");
+                        throw e; 
+                    }
+                }
+            }
+        }
 
         stage('Docker Build') {
 
