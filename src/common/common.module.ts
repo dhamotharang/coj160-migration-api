@@ -8,6 +8,7 @@ import { PersonModule } from './person/person.module';
 import { AppointModule } from './appoint/appoint.module';
 
 @Module({
-  imports: [RequestModule, MigrateModule, SettingModule, OrganizationModule, JudgeModule, PersonModule, AppointModule]
+  imports: [RequestModule, MigrateModule, SettingModule, OrganizationModule, JudgeModule, PersonModule, AppointModule],
+  controllers: []
 })
 export class CommonModule { }

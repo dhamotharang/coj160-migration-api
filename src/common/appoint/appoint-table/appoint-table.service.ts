@@ -4,14 +4,17 @@ import { MigrationLogService } from 'src/common/migrate/migration-log/migration-
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { getManager, Repository } from 'typeorm';
-import { OracleLookupAppointListDTO } from '../dto/lookup-appoint-list.dto';
-import { OracleLookupAppointLists } from '../entities/oracle/lookup-appoint-list.entity';
+import { OracleLookupAppointTableDTO } from '../dto/lookup-appoint-table.dto';
+import { MySQLAppointTables } from '../entities/mysql/appoint-table.entity';
+import { OracleLookupAppointTables } from '../entities/oracle/lookup-appoint-table.entity';
 
 @Injectable()
-export class AppointListService extends HelperService {
+export class AppointTableService extends HelperService {
   constructor(
-    @InjectRepository(OracleLookupAppointLists)
-    private readonly oracleLookupAppointListReposities: Repository<OracleLookupAppointLists>,
+    @InjectRepository(OracleLookupAppointTables)
+    private readonly oracleLookupAppointTableRepositories: Repository<OracleLookupAppointTables>,
+    @InjectRepository(MySQLAppointTables)
+    private readonly mysqlAppointTablesTableRepositories: Repository<MySQLAppointTables>,
     private readonly paramService: ParamService,
     private readonly migrateLogService: MigrationLogService,
   ) {
@@ -110,7 +113,7 @@ export class AppointListService extends HelperService {
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null) {
     try {
-      const conditions = await this.oracleLookupAppointListReposities.createQueryBuilder("A");
+      const conditions = await this.oracleLookupAppointTableRepositories.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters);
 
@@ -141,7 +144,7 @@ export class AppointListService extends HelperService {
 
   async findORACLEOneData(filters: any = null, holdReasonId: number = 0) {
     try {
-      const conditions = await this.oracleLookupAppointListReposities.createQueryBuilder("A");
+      const conditions = await this.oracleLookupAppointTableRepositories.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters, holdReasonId);
 
@@ -156,38 +159,22 @@ export class AppointListService extends HelperService {
     }
   }
 
-  async findMYSQLData() {
+  async findMYSQLData(filters: any = null, pages: any = null, id: number = 0) {
     try {
-      const items = await getManager("mysql").query(`
-        SELECT
-          *
-        FROM (
-          SELECT
-            A.app_id appId,
-            A.app_name appName,
-            'pappoint_list' appTable
-          FROM pappoint_list A
+      const conditions = await this.mysqlAppointTablesTableRepositories.createQueryBuilder("A");
 
-          UNION
+      await this.mysqlFilter(conditions, filters, id);
 
-          SELECT
-            B.app_id appId,
-            B.app_name appName,
-            'pappoint_list1' appTable
-          FROM pappoint_list1 B
+      const total = await conditions.getOne();
 
-          UNION
+      if (pages) {
+        await conditions
+          .skip(pages.start)
+          .take(pages.limit);
+      }
 
-          SELECT
-            C.app_sub_id appId,
-            C.app_sub_name appName,
-            'pappoint_sub_list' appTable
-          FROM pappoint_sub_list C
-          ) appointList
-        ORDER BY
-          appointList.appId DESC,
-          appointList.appName DESC
-      `);
+      const getItems = await conditions.getMany();
+      const items = await getItems.map(element => element.toResponseObject());
 
       return { items, total: items.length };
     } catch (error) {
@@ -198,11 +185,11 @@ export class AppointListService extends HelperService {
 
 
   // POST Method
-  async createData(payloadId: number, data: OracleLookupAppointListDTO) {
+  async createData(payloadId: number, data: OracleLookupAppointTableDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
-      const created = await this.oracleLookupAppointListReposities.create({ ...data, createdBy: payloadId, updatedBy: payloadId, removedBy: 0, createdDate, updatedDate: createdDate });
-      await this.oracleLookupAppointListReposities.save(created);
+      const created = await this.oracleLookupAppointTableRepositories.create({ ...data, createdBy: payloadId, updatedBy: payloadId, removedBy: 0, createdDate, updatedDate: createdDate });
+      await this.oracleLookupAppointTableRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
       throw new HttpException(`[oracle: create appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);

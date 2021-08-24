@@ -30,7 +30,8 @@ pipeline {
                 echo '#############################################################################################################'
                 script{
                     try {
-                        dockerImage = "${docker.build} ${registry}:latest"
+                        // dockerImage = "${docker.build} ${registry}:latest"
+                        sh "docker build -t ${registry}:latest"
                     } catch(err){
                         throw err;
                     }
@@ -62,7 +63,7 @@ pipeline {
                 echo '#############################################################################################################'
                 script{
                     try{
-                        sh 'docker rmi '+ "${registry}:latest"
+                        sh "docker rmi ${registry}:latest"
                     }catch(err){
                         throw err;
                     }
