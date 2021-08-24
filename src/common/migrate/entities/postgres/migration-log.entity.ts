@@ -8,15 +8,15 @@ export class PostgresMigrationLogs extends HelperService {
   @Column({ name: "code" }) code: string;
   @Column({ name: "name" }) name: string;
   @Column({ name: "server_type", enum: ["PROD", "UAT"] }) serverType: string;
-  @Column({ name: "status", enum: ["SUCCESS", "ERROR"] }) status: string;
+  @Column({ name: "status", enum: ["SUCCESS", "ERROR", "DUPLICATE"] }) status: string;
   @Column({ name: "datetime" }) datetime: Date;
   @Column({ name: "source_dbtype", enum: ["ORACLE", "MYSQL", "POSTGRES"] }) sourceDBType: string;
   @Column({ name: "source_table_name" }) sourceTableName: string;
   @Column({ name: "source_id" }) sourceId: number;
   @Column({ name: "source_data", type: "text", nullable: true }) sourceData: string;
-  @Column({ name: "destination_dbtype", enum: ["ORACLE", "MYSQL", "POSTGRES"] }) destinationDBType: string;
-  @Column({ name: "destination_table_name" }) destinationTableName: string;
-  @Column({ name: "destination_id" }) destinationId: number;
+  @Column({ name: "destination_dbtype", nullable: true, enum: ["ORACLE", "MYSQL", "POSTGRES"] }) destinationDBType: string;
+  @Column({ name: "destination_table_name", nullable: true }) destinationTableName: string;
+  @Column({ name: "destination_id", nullable: true }) destinationId: number;
   @Column({ name: "destination_data", type: "text", nullable: true }) destinationData: string;
 
   @BeforeInsert()

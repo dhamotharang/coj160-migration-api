@@ -1,5 +1,6 @@
+import { HttpException, HttpStatus } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, getManager, PrimaryColumn } from "typeorm";
 
 @Entity({ name: "PC_LOOKUP_APPOINT_TABLE" })
 export class OracleLookupAppointTables extends HelperService {
@@ -31,6 +32,19 @@ export class OracleLookupAppointTables extends HelperService {
   @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp" }) removedDate: Date;
   @Column({ name: "CREATED_DATE", type: "timestamp" }) createdDate: Date;
   @Column({ name: "UPDATED_DATE", nullable: true, type: "timestamp" }) updatedDate: Date;
+
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_LOOKUP_APPOINT_TABLE_SEQ".nextval ID FROM DUAL`);
+      this.appointTableId = res[0].ID;
+      this.orderNo = res[0].ID;
+      this.appointTableCode = `${res[0].ID}`.padStart(3, '0');
+      this.selectCode = `${res[0].ID}`.padStart(3, '0');
+    } catch (error) {
+      throw new HttpException(`[oracle: before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
   toResponseObject() {
     const { appointTableId, orderNo, activeFlag, appointTableCode, appointTableName, courtId, dayThai, fri, isDefault, maxQty, mon, remark, sat, selectCode, sun, thu, tue, wed, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate } = this;

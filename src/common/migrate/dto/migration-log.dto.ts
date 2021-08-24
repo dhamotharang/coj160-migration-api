@@ -9,8 +9,4 @@ export class MigrationLogDTO {
   @ApiProperty() sourceTableName: string;
   @ApiProperty() sourceId: number;
   @ApiProperty() sourceData: string;
-  @ApiProperty({ enum: ["ORACLE", "MYSQL", "POSTGRES"] }) destinationDBType: string;
-  @ApiProperty() destinationTableName: string;
-  @ApiProperty() destinationId: number;
-  @ApiProperty() destinationData: string;
 }

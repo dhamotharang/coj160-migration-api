@@ -10,52 +10,83 @@ export class MigrationLogService {
     @InjectRepository(PostgresMigrationLogs, "postgresql") private readonly migrationLogRepositories: Repository<PostgresMigrationLogs>
   ) { }
 
+  // Filter zone
+  async postgresFilter(conditions, filters: any = null, moduleId: number = 0) {
+    try {
+      if (moduleId > 0) {
+        await conditions.where("A.id = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.id <> 0");
+      }
+
+      if (filters) {
+        const { text, code, serverType, status, date, sourceDBType, sourceTableName, sourceId, destinationDBType, destinationTableName, destinationId } = filters;
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`(
+            A.code LIKE '%${text}%' OR 
+            A.name LIKE '%${text}%' OR 
+            A.sourceTableName LIKE '%${text}%' OR
+            A.sourceData LIKE '%${text}%' OR
+            A.destinationTableName LIKE '%${text}%' OR
+            A.destinationData LIKE '%${text}%'
+          )`)
+        }
+
+        if (typeof code !== "undefined") {
+          await conditions.andWhere("A.code = :code", { code });
+        }
+
+        if (typeof serverType !== "undefined") {
+          await conditions.andWhere("A.serverType = :serverType", { serverType });
+        }
+
+        if (typeof status !== "undefined") {
+          await conditions.andWhere("A.status = :status", { status });
+        }
+
+        if (typeof date !== "undefined") {
+          await conditions.andWhere("TO_CHAR(A.datetime, 'YYYY-MM-DD') = :date", { date });
+        }
+
+        if (typeof sourceDBType !== "undefined") {
+          await conditions.andWhere("A.sourceDBType = :sourceDBType", { sourceDBType });
+        }
+
+        if (typeof sourceTableName !== "undefined") {
+          await conditions.andWhere("A.sourceTableName = :sourceTableName", { sourceTableName });
+        }
+
+        if (typeof sourceId !== "undefined") {
+          await conditions.andWhere("A.sourceId = :sourceId", { sourceId });
+        }
+
+        if (typeof destinationDBType !== "undefined") {
+          await conditions.andWhere("A.destinationDBType = :destinationDBType", { destinationDBType });
+        }
+
+        if (typeof destinationTableName !== "undefined") {
+          await conditions.andWhere("A.destinationTableName = :destinationTableName", { destinationTableName });
+        }
+
+        if (typeof destinationId !== "undefined") {
+          await conditions.andWhere("A.destinationId = :destinationId", { destinationId });
+        }
+      }
+
+      return await conditions;
+    } catch (error) {
+      throw new HttpException(`[postgres: filter failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
+
   async findPOSTGRESData(filters: any = null, pages: any = null) {
     try {
-      const { text, serverType, date, dateStart, dateEnd, sourceDBType, sourceTableName, sourceId, destinationDBType, destinationTableName, destinationId, sort } = filters;
       const conditions = await this.migrationLogRepositories.createQueryBuilder("A")
         .where("A.id <> 0");
 
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.code = '%${text}%' OR A.name = '%${text}%')`);
-      }
-
-      if (typeof serverType !== "undefined") {
-        await conditions.andWhere("A.serverType = :serverType", { serverType });
-      }
-
-      if (typeof date !== "undefined") {
-        await conditions.andWhere("TO_CHAR(A.datetime, 'YYYY-MM-DD') = :date", { date });
-      }
-
-      if (typeof dateStart !== "undefined" && typeof dateEnd !== "undefined") {
-        await conditions.andWhere("TO_CHAR(A.datetime, 'YYYY-MM-DD') BETWEEN :dateStart AND :dateEnd ", { dateStart, dateEnd });
-      }
-
-      if (typeof sourceDBType !== "undefined") {
-        await conditions.andWhere("A.sourceDBType = :sourceDBType", { sourceDBType });
-      }
-
-
-      if (typeof sourceTableName !== "undefined") {
-        await conditions.andWhere("A.sourceTableName = :sourceTableName", { sourceTableName });
-      }
-
-      if (typeof sourceId !== "undefined") {
-        await conditions.andWhere("A.sourceId = :sourceId", { sourceId });
-      }
-
-      if (typeof destinationDBType !== "undefined") {
-        await conditions.andWhere("A.destinationDBType = :destinationDBType", { destinationDBType });
-      }
-
-      if (typeof destinationTableName !== "undefined") {
-        await conditions.andWhere("A.destinationTableName = :destinationTableName", { destinationTableName });
-      }
-
-      if (typeof destinationId !== "undefined") {
-        await conditions.andWhere("A.destinationId = :destinationId", { destinationId });
-      }
+      await this.postgresFilter(conditions, filters);
 
       const total = await conditions.getCount();
 
@@ -65,8 +96,8 @@ export class MigrationLogService {
           .take(pages.limit);
       }
 
-      if (typeof sort !== "undefined") {
-        const _sorts = `${sort}`.split('-');
+      if (typeof filters.sort !== "undefined") {
+        const _sorts = `${filters.sort}`.split('-');
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions.orderBy("A.id", "DESC");

@@ -4,6 +4,7 @@ import { MigrationLogService } from 'src/common/migrate/migration-log/migration-
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { getManager, Repository } from 'typeorm';
+import { AppointListService } from '../appoint-list/appoint-list.service';
 import { OracleLookupAppointTableDTO } from '../dto/lookup-appoint-table.dto';
 import { MySQLAppointTables } from '../entities/mysql/appoint-table.entity';
 import { OracleLookupAppointTables } from '../entities/oracle/lookup-appoint-table.entity';
@@ -15,8 +16,9 @@ export class AppointTableService extends HelperService {
     private readonly oracleLookupAppointTableRepositories: Repository<OracleLookupAppointTables>,
     @InjectRepository(MySQLAppointTables, "mysql")
     private readonly mysqlAppointTablesTableRepositories: Repository<MySQLAppointTables>,
-    private readonly paramService: ParamService,
-    private readonly migrateLogService: MigrationLogService,
+    private paramService: ParamService,
+    private migrateLogService: MigrationLogService,
+    private appointListService: AppointListService
   ) {
     super();
   }
@@ -25,16 +27,16 @@ export class AppointTableService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId > 0) {
-        await conditions.where("A.appointListId = :moduleId", { moduleId });
+        await conditions.where("A.appointTableId = :moduleId", { moduleId });
       } else {
         await conditions.where("A.removedBy = 0");
       }
 
       if (filters) {
-        const { text, orderNo, activeFlag, appFlag, appointListCode, appointListName, courtId } = filters;
+        const { text, orderNo, activeFlag, appointTableCode, appointTableName, courtId } = filters;
 
         if (typeof text !== "undefined") {
-          await conditions.andWhere(`(A.appointListName LIKE '%${text}'%)`);
+          await conditions.andWhere(`(A.appointTableName LIKE '%${text}'% OR A.appointTableCode LIKE '%${text}'%)`);
         }
 
         if (typeof orderNo !== "undefined") {
@@ -45,16 +47,12 @@ export class AppointTableService extends HelperService {
           await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
         }
 
-        if (typeof appFlag !== "undefined") {
-          await conditions.andWhere("A.appFlag = :appFlag", { appFlag });
+        if (typeof appointTableCode !== "undefined") {
+          await conditions.andWhere("A.appointTableCode = :appointTableCode", { appointTableCode });
         }
 
-        if (typeof appointListCode !== "undefined") {
-          await conditions.andWhere("A.appointListCode = :appointListCode", { appointListCode });
-        }
-
-        if (typeof appointListName !== "undefined") {
-          await conditions.andWhere("A.appointListName = :appointListName", { appointListName });
+        if (typeof appointTableName !== "undefined") {
+          await conditions.andWhere("A.appointTableName = :appointTableName", { appointTableName });
         }
 
         if (typeof courtId !== "undefined") {
@@ -71,35 +69,35 @@ export class AppointTableService extends HelperService {
   async mysqlFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId > 0) {
-        await conditions.where("A.delayId = :moduleId", { moduleId });
+        await conditions.where("A.tableId = :moduleId", { moduleId });
       } else {
-        await conditions.where("A.delayId <> 0");
+        await conditions.where("A.tableId <> 0");
       }
 
       if (filters) {
-        const { text, courtRunning, delayType, delayName, stdId, createDepCode } = filters;
+        const { text, courtRunning, tableName, caseCateId, caseStatus, tableType, } = filters;
         if (typeof text !== "undefined") {
-          await conditions.andWhere(`A.subjectName LIKE '%${text}%'`)
+          await conditions.andWhere(`A.tableName LIKE '%${text}%'`)
         }
 
         if (typeof courtRunning !== "undefined") {
           await conditions.andWhere("A.courtRunning = :courtRunning", { courtRunning });
         }
 
-        if (typeof delayType !== "undefined") {
-          await conditions.andWhere("A.delayType = :delayType", { delayType });
+        if (typeof tableName !== "undefined") {
+          await conditions.andWhere("A.tableName = :tableName", { tableName });
         }
 
-        if (typeof delayName !== "undefined") {
-          await conditions.andWhere("A.delayName = :delayName", { delayName });
+        if (typeof caseCateId !== "undefined") {
+          await conditions.andWhere("A.caseCateId = :caseCateId", { caseCateId });
         }
 
-        if (typeof stdId !== "undefined") {
-          await conditions.andWhere("A.stdId = :stdId", { stdId });
+        if (typeof caseStatus !== "undefined") {
+          await conditions.andWhere("A.caseStatus = :caseStatus", { caseStatus });
         }
 
-        if (typeof createDepCode !== "undefined") {
-          await conditions.andWhere("A.createDepCode = :createDepCode", { createDepCode });
+        if (typeof tableType !== "undefined") {
+          await conditions.andWhere("A.tableType = :tableType", { tableType });
         }
       }
 
@@ -130,7 +128,7 @@ export class AppointTableService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.appointListId", "DESC");
+          .orderBy("A.appointTableId", "DESC");
       }
 
       const getItems = await conditions.getMany();
@@ -138,7 +136,7 @@ export class AppointTableService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[oracle: find litigant data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find appoint table failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -155,7 +153,7 @@ export class AppointTableService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find oracle one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find appoint table one failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -178,7 +176,7 @@ export class AppointTableService extends HelperService {
 
       return { items, total: items.length };
     } catch (error) {
-      throw new HttpException(`[mysql: find pappoint list data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find pappoint table data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -188,52 +186,93 @@ export class AppointTableService extends HelperService {
   async createData(payloadId: number, data: OracleLookupAppointTableDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
-      const created = await this.oracleLookupAppointTableRepositories.create({ ...data, createdBy: payloadId, updatedBy: payloadId, removedBy: 0, createdDate, updatedDate: createdDate });
+      const created = await this.oracleLookupAppointTableRepositories.create({
+        ...data,
+        activeFlag: 1,
+        dayThai: "-",
+        isDefault: 0,
+        maxQty: 35,
+        createdBy: payloadId,
+        updatedBy: payloadId,
+        removedBy: 0,
+        createdDate,
+        updatedDate: createdDate
+      });
       await this.oracleLookupAppointTableRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[oracle: create appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create appoint table failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
-  /* async createMigrationData(payloadId: number, filters: any = null) {
+  async createMigrationData(payloadId: number, filters: any = null) {
     try {
       let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
+      // const source = await this.appointListService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
       const source = await this.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
 
       if (params && await source.total > 0) {
         for (let index = 0; index < source.items.length; index++) {
-          const { appId, appName, appTable } = source.items[index];
+          // const { appId, appName, appTable } = source.items[index];
+          const { tableId, tableName, mon, tue, wed, thu, fri, sat, sun } = source.items[index];
 
-          const orHoldReason = await (await this.findORACLEOneData({ appointListName: `${appName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+          const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
+            serverType: `${process.env.SERVER_TYPE}`,
+            status: "SUCCESS",
+            sourceDBType: "MYSQL",
+            sourceTableName: "pappoint_table",
+            sourceId: tableId,
+          })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
 
-          if (!orHoldReason) { // ถ้าไม่มีให้ทำงาน
-            const createData = {
-              activeFlag: 1,
-              appointListName: `${appName}`.trim(),
-              courtId: parseInt(params.paramValue),
-            }; // เตรียมข้อมูลในการเพิ่ม
+          if (migresLogs.length > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+              name: "ระบบการนัดหมาย: ตารางนัด",
+              serverType: `${process.env.SERVER_TYPE}`,
+              status: "DUPLICATE",
+              datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+              sourceDBType: "MYSQL",
+              sourceTableName: "pappoint_table",
+              sourceId: tableId,
+              sourceData: JSON.stringify(source.items[index]),
+            })); // เพิ่ม Log การ Migrate ข้อมูล
+          } else {
+            const orAppointTables = await (await this.findORACLEOneData({ appointTableName: `${tableName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
-            const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
+            if (!orAppointTables) { // ถ้าไม่มีให้ทำงาน
+              const createData = {
+                appointTableName: `${tableName}`.trim(),
+                courtId: parseInt(params.paramValue),
+                remark: "from Migration",
+                fri: fri ? fri : 0,
+                mon: mon ? mon : 0,
+                sat: sat ? sat : 0,
+                sun: sun ? sun : 0,
+                thu: thu ? thu : 0,
+                tue: tue ? tue : 0,
+                wed: wed ? wed : 0,
+              }; // เตรียมข้อมูลในการเพิ่ม
 
-            if (created) {
-              const logData = {
-                name: "ระบบการนัดหมาย: เลื่อนพิจารณา",
-                serverType: `${process.env.SERVER_TYPE}`,
-                status: (created ? "SUCCESS" : "ERROR"),
-                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                sourceDBType: "MYSQL",
-                sourceTableName: appTable,
-                sourceId: appId,
-                sourceData: JSON.stringify(createData),
-                destinationDBType: "ORACLE",
-                destinationTableName: "PC_LOOKUP_APPOINT_LIST",
-                destinationId: created.appointListId,
-                destinationData: JSON.stringify(created)
-              }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+              const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
-              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData)); // เพิ่ม Log การ Migrate ข้อมูล
+              if (created) {
+                const logData = {
+                  name: "ระบบการนัดหมาย: ตารางนัด",
+                  serverType: `${process.env.SERVER_TYPE}`,
+                  status: (created ? "SUCCESS" : "ERROR"),
+                  datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                  sourceDBType: "MYSQL",
+                  sourceTableName: "pappoint_table",
+                  sourceId: tableId,
+                  sourceData: JSON.stringify(createData),
+                  destinationDBType: "ORACLE",
+                  destinationTableName: "PC_LOOKUP_APPOINT_TABLE",
+                  destinationId: created.appointTableId,
+                  destinationData: JSON.stringify(created)
+                }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+
+                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData)); // เพิ่ม Log การ Migrate ข้อมูล
+              }
             }
           }
         }
@@ -241,7 +280,7 @@ export class AppointTableService extends HelperService {
 
       return migrateLogs;
     } catch (error) {
-      throw new HttpException(`[oracle: migrate appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: migrate appoint table failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
-  } */
+  }
 }

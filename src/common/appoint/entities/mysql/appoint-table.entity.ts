@@ -38,7 +38,7 @@ export class MySQLAppointTables extends HelperService {
   toResponseObject() {
     const { courtRunning, tableId, tableName, caseCateId, caseStatus, tableType, mon, tue, wed, thu, fri, sat, sun, branchCase, condFlag, depCode, remark, conAppAfterCase, createDepCode, createUserId, createUser, createDate, updateDepCode, updateUserId, updateUser, updateDate } = this;
     const responseObject = {
-      courtRunning, tableId, tableName, caseCateId, caseStatus, tableType,
+      tableId, courtRunning, tableName, caseCateId, caseStatus, tableType,
       mon, tue, wed, thu, fri, sat, sun, branchCase, condFlag, depCode,
       remark, conAppAfterCase, createDepCode, createUserId, createUser,
       updateUserId, updateUser, updateDepCode,

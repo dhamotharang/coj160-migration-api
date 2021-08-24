@@ -1,7 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
 export class OracleLookupAppointTableDTO {
-  @ApiProperty() appointTableCode: string;
   @ApiProperty() appointTableName: string;
   @ApiProperty() courtId: number;
   @ApiProperty() remark: string;
