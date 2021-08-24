@@ -196,7 +196,7 @@ export class AppointTableService extends HelperService {
     }
   }
 
-  async createMigrationData(payloadId: number, filters: any = null) {
+  /* async createMigrationData(payloadId: number, filters: any = null) {
     try {
       let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
@@ -243,5 +243,5 @@ export class AppointTableService extends HelperService {
     } catch (error) {
       throw new HttpException(`[oracle: migrate appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
-  }
+  } */
 }
