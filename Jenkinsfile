@@ -31,7 +31,7 @@ pipeline {
                 script{
                     try {
                         // dockerImage = "${docker.build} ${registry}:latest"
-                        sh "docker build -t ${registry}:latest"
+                        sh "docker build -t ${registry}:latest ."
                     } catch(err){
                         throw err;
                     }
