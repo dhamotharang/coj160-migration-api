@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiParam, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
-import { HoldReasonService } from './hold-reason.service';
+import { OracleProceedAppointDTO } from '../dto/proceed-appoint.dto';
+import { AppointService } from './appoint.service';
 
-@ApiTags("Proceed: Hold reason")
-@Controller('holdReason')
-export class HoldReasonController {
+@ApiTags("Proceed: Appoint")
+@Controller('proceedAppoint')
+export class AppointController {
   constructor(
-    private mainService: HoldReasonService,
+    private mainService: AppointService,
     private resdata: ResponseDataController
   ) { }
 
@@ -52,7 +52,7 @@ export class HoldReasonController {
   @ApiOperation({ summary: "เพิ่มข้อมูล" })
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
-  async createData(@Res() res, @Req() req, @Body() body: OracleProceedHoldReasonDTO) {
+  async createData(@Res() res, @Req() req, @Body() body: OracleProceedAppointDTO) {
     Logger.log(body, "body");
     const resdata = await this.mainService.createData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);

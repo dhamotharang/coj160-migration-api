@@ -1,8 +1,15 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
-import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
+import { HelperService } from "src/shared/helpers/helper.service";
+import { BeforeInsert, Column, Entity, getManager, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { OracleProceedAppointCaseJudges } from "./proceed-appoint-case-judge.entity";
+import { OracleProceedAppointContinues } from "./proceed-appoint-continue.entity";
+import { OracleProceedAppointResults } from "./proceed-appoint-result.entity";
 
 @Entity({ name: "PC_PROCEED_APPOINT" })
-export class OracleProceedAppoints {
+export class OracleProceedAppoints extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "APPOINT_ID", comment: "รหัสข้อมูลนัดความ(AUTO INCREMENT)" }) appointId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "ลำดับของข้อมูล" }) orderNo: number;
   @Column({ name: "OFFENSE_DETAIL", nullable: true, type: "clob", comment: "ฐานความผิด" }) offenseDetail: string;
@@ -31,11 +38,20 @@ export class OracleProceedAppoints {
   @Column({ name: "TWO_JUDGE", nullable: true, comment: "ตัวเลือกผู้พิพากษาสองนาย(ศาลจังหวัด)" }) twoJudge: number;
   @Column({ name: "IS_ELECTRONIC_FILING", comment: "เป็นนัดความจากระบบ E-Filing หรือไม่ ?" }) isElectronicFiling: number;
   @Column({ name: "CREATED_BY", comment: "	รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
-  @Column({ name: "UPDATED_BY		NUMBER	38, 0	Y", nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
+  @Column({ name: "UPDATED_BY", nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
   @Column({ name: "REMOVED_BY", comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
   @Column({ name: "CREATED_DATE", type: "timestamp", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
   @Column({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
+
+  @OneToMany(type => OracleProceedAppointContinues, conti => conti.proceedAppoints)
+  @JoinColumn({ name: "APPOINT_ID" }) proceedAppointContinues: OracleProceedAppointContinues[];
+
+  @OneToMany(type => OracleProceedAppointCaseJudges, caseJudge => caseJudge.proceedAppoints)
+  @JoinColumn({ name: "APPOINT_ID" }) proceedAppointCaseJudges: OracleProceedAppointCaseJudges[];
+
+  @OneToMany(type => OracleProceedAppointResults, results => results.proceedAppoints)
+  @JoinColumn({ name: "APPOINT_ID" }) proceedAppointResults: OracleProceedAppointResults[];
 
   @BeforeInsert()
   async beforeInsert() {
@@ -49,8 +65,21 @@ export class OracleProceedAppoints {
   }
 
   toResponseObject() {
-    const { appointId, createdBy, createdDate, orderNo, removedBy, removedDate, updatedBy, updatedDate, offenseDetail, appointById, appointDepartment, arrest, arrestDate, caseId, investigateAccuser, investigateAccuserDate, investigateDefendent, investigateDefendentDate, investigateOther, investigateOtherDate, investigateOtherDetail, lawyerClaimId, lawyerDefendantId, noArrest, noJudge, ownerDate, plaintiffId, plaintiffType, reasonAppointId, release, roomId, twoJudge, isElectronicFiling } = this;
-    const responseObject = { appointId, createdBy, createdDate, orderNo, removedBy, removedDate, updatedBy, updatedDate, offenseDetail, appointById, appointDepartment, arrest, arrestDate, caseId, investigateAccuser, investigateAccuserDate, investigateDefendent, investigateDefendentDate, investigateOther, investigateOtherDate, investigateOtherDetail, lawyerClaimId, lawyerDefendantId, noArrest, noJudge, ownerDate, plaintiffId, plaintiffType, reasonAppointId, release, roomId, twoJudge, isElectronicFiling };
+    const {
+      appointId, createdBy, createdDate, orderNo, removedBy, removedDate, updatedBy, updatedDate, offenseDetail, appointById, appointDepartment, arrest, arrestDate, caseId, investigateAccuser, investigateAccuserDate, investigateDefendent, investigateDefendentDate, investigateOther, investigateOtherDate, investigateOtherDetail, lawyerClaimId, lawyerDefendantId, noArrest, noJudge, ownerDate, plaintiffId, plaintiffType, reasonAppointId, release, roomId, twoJudge, isElectronicFiling,
+      proceedAppointContinues, proceedAppointCaseJudges, proceedAppointResults
+    } = this;
+    const responseObject = { appointId, orderNo, offenseDetail, appointById, appointDepartment, arrest, arrestDate, caseId, investigateAccuser, investigateAccuserDate, investigateDefendent, investigateDefendentDate, investigateOther, investigateOtherDate, investigateOtherDetail, lawyerClaimId, lawyerDefendantId, noArrest, noJudge, ownerDate, plaintiffId, plaintiffType, reasonAppointId, release, roomId, twoJudge, isElectronicFiling };
+
+    Object.assign(responseObject, {
+      createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+      proceedAppointContinues: proceedAppointContinues ? proceedAppointContinues.map(element => element.toResponseObject()) : null,
+      proceedAppointCaseJudges: proceedAppointCaseJudges ? proceedAppointCaseJudges.map(element => element.toResponseObject()) : null,
+      proceedAppointResults: proceedAppointResults ? proceedAppointResults.map(element => element.toResponseObject()) : null,
+    })
     return responseObject;
   }
 }

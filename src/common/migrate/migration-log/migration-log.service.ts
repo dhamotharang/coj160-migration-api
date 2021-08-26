@@ -7,7 +7,8 @@ import { PostgresMigrationLogs } from '../entities/postgres/migration-log.entity
 @Injectable()
 export class MigrationLogService {
   constructor(
-    @InjectRepository(PostgresMigrationLogs, "postgresql") private readonly migrationLogRepositories: Repository<PostgresMigrationLogs>
+    @InjectRepository(PostgresMigrationLogs, "postgresql")
+    private migrationLogRepositories: Repository<PostgresMigrationLogs>
   ) { }
 
   // Filter zone
@@ -108,11 +109,11 @@ export class MigrationLogService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find migration data fail] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[postgres: find migration log fail] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
-  async findOnePOSTGRESData(migrationId: number) {
+  async findPOSTGRESOneData(migrationId: number) {
     try {
       const conditions = await this.migrationLogRepositories.createQueryBuilder("A")
         .where("A.id = :migrationId", { migrationId });
@@ -122,7 +123,7 @@ export class MigrationLogService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[find migration data failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[postgres: find one migration log failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -132,7 +133,7 @@ export class MigrationLogService {
       await this.migrationLogRepositories.save(created);
       return created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[create migrate log] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[postgres: create migrate log] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 }

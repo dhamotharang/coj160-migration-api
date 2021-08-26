@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
-import { getManager, Repository } from 'typeorm';
-import { AppointListService } from '../appoint-list/appoint-list.service';
+import { Repository } from 'typeorm';
 import { OracleLookupAppointTableDTO } from '../dto/lookup-appoint-table.dto';
 import { MySQLAppointTables } from '../entities/mysql/appoint-table.entity';
 import { OracleLookupAppointTables } from '../entities/oracle/lookup-appoint-table.entity';
@@ -18,7 +17,6 @@ export class AppointTableService extends HelperService {
     private readonly mysqlAppointTablesTableRepositories: Repository<MySQLAppointTables>,
     private paramService: ParamService,
     private migrateLogService: MigrationLogService,
-    private appointListService: AppointListService
   ) {
     super();
   }
@@ -33,7 +31,7 @@ export class AppointTableService extends HelperService {
       }
 
       if (filters) {
-        const { text, orderNo, activeFlag, appointTableCode, appointTableName, courtId } = filters;
+        const { text, orderNo, activeFlag, appointTableCode, appointTableName, courtId, tempId } = filters;
 
         if (typeof text !== "undefined") {
           await conditions.andWhere(`(A.appointTableName LIKE '%${text}'% OR A.appointTableCode LIKE '%${text}'%)`);
@@ -57,6 +55,10 @@ export class AppointTableService extends HelperService {
 
         if (typeof courtId !== "undefined") {
           await conditions.andWhere("A.courtId = :courtId", { courtId });
+        }
+
+        if (typeof tempId !== "undefined") {
+          await conditions.andWhere("A.tempId = :tempId", { tempId });
         }
       }
 

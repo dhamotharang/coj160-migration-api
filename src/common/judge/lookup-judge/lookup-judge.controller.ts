@@ -1,22 +1,21 @@
-import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
-import { HoldReasonService } from './hold-reason.service';
+import { LookupJudgeService } from './lookup-judge.service';
 
-@ApiTags("Proceed: Hold reason")
-@Controller('holdReason')
-export class HoldReasonController {
+@ApiTags("Lookup: Judge")
+@Controller('lookupJudge')
+export class LookupJudgeController {
   constructor(
-    private mainService: HoldReasonService,
-    private resdata: ResponseDataController
+    private mainService: LookupJudgeService,
+    private resdata: ResponseDataController,
   ) { }
 
   // Get Method
   @Get()
-  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
   @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
+  @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -30,8 +29,9 @@ export class HoldReasonController {
   @Get(':start/:limit/pages')
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
-  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Pages" })
   @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
+  @ApiQuery({ name: "text", required: false })
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Page" })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
@@ -44,26 +44,19 @@ export class HoldReasonController {
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
   }
 
-
-
-
-  // POST Method
-  @Post()
-  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @Get(':judeId')
+  @ApiOperation({ summary: "เรียกดูข้อมูลด้วย Id" })
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
-  async createData(@Res() res, @Req() req, @Body() body: OracleProceedHoldReasonDTO) {
-    Logger.log(body, "body");
-    const resdata = await this.mainService.createData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
-  }
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
+  @ApiParam({ name: "judeId" })
+  async findOneData(@Res() res, @Req() req, @Query() query, @Param() param) {
+    let dbtype = "ORACLE";
+    if (typeof query.dbtype !== "undefined") {
+      dbtype = query.dbtype.toUpperCase();
+    }
 
-  @Post('migration')
-  @ApiOperation({ summary: "นำเข้าข้อมูล" })
-  @ApiBearerAuth()
-  @UseGuards(new AuthGaurd())
-  async createMigration(@Res() res, @Req() req, @Body() body) {
-    const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
+    const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
   }
 }

@@ -14,6 +14,7 @@ export class OracleLookupAppointTables extends HelperService {
   @Column({ name: "APPOINT_TABLE_CODE", nullable: true }) appointTableCode: string;
   @Column({ name: "APPOINT_TABLE_NAME" }) appointTableName: string;
   @Column({ name: "COURT_ID", nullable: true }) courtId: number;
+  @Column({ name: "TEMP_ID", nullable: true }) tempId: number;
   @Column({ name: "DAY_THAI" }) dayThai: string;
   @Column({ name: "FRI", nullable: true }) fri: number;
   @Column({ name: "IS_DEFAULT", nullable: true }) isDefault: number;
@@ -47,10 +48,10 @@ export class OracleLookupAppointTables extends HelperService {
   }
 
   toResponseObject() {
-    const { appointTableId, orderNo, activeFlag, appointTableCode, appointTableName, courtId, dayThai, fri, isDefault, maxQty, mon, remark, sat, selectCode, sun, thu, tue, wed, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate } = this;
+    const { appointTableId, orderNo, activeFlag, appointTableCode, appointTableName, courtId, tempId, dayThai, fri, isDefault, maxQty, mon, remark, sat, selectCode, sun, thu, tue, wed, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate } = this;
     const responseObject = {
       appointTableId, orderNo, activeFlag, appointTableCode, appointTableName,
-      courtId, dayThai, fri, isDefault, maxQty, mon, remark, sat, selectCode,
+      courtId, tempId, dayThai, fri, isDefault, maxQty, mon, remark, sat, selectCode,
       sun, thu, tue, wed, createdBy, updatedBy, removedBy,
       removedDate: this.dateFormat("YYYY-MM-DD H:i:s", removedDate),
       createdDate: this.dateFormat("YYYY-MM-DD H:i:s", createdDate),

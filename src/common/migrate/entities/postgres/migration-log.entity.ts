@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Logger } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
 import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
+import { MigrationLogDTO } from "../../dto/migration-log.dto";
 
 @Entity({ name: "migration_logs" })
 export class PostgresMigrationLogs extends HelperService {
@@ -30,7 +31,7 @@ export class PostgresMigrationLogs extends HelperService {
 
   toResponseObject() {
     const { id, code, name, serverType, status, datetime, sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationId, destinationData } = this;
-    const responseObject = {
+    const responseObject: any = {
       id, code, name, serverType, status, datetime: this.dateFormat("YYYY-MM-DD H:i:s", datetime),
       sourceDBType, sourceTableName, sourceId, sourceData, destinationDBType, destinationTableName, destinationId, destinationData
     };

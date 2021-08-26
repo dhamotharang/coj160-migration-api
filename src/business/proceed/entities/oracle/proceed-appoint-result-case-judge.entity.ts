@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_PROCEED_APPOINT_RESULT_CASE_JUDGE" })
-export class OracleProceedAppointCaseJudges {
+export class OracleProceedAppointResultCaseJudges {
   @PrimaryGeneratedColumn({ name: "APPOINT_CASE_JUDGE_ID", comment: "รหัสข้อมูลผู้พิพากษาผลลัพธ์นัดความ(AUTO INCREMENT)" }) appointCaseJudgeId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "ลำดับของข้อมูล" }) orderNo: number;
   @Column({ name: "APPOINT_RESULT_ID", comment: "รหัสผลลัพธ์นัดความ เชื่อมโยง PC_PROCEED_APPOINT_RESULT" }) appointResultId: number;

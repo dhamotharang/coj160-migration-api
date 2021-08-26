@@ -97,11 +97,23 @@ export class MySQLAppointments extends HelperService {
   @Column({ name: "ref_blackno", nullable: true, comment: "transfer" }) refBlackno: string;
 
   toResponseObject() {
-    const { courtRunning, appRunning, runId, appSeq, dateAppoint, timeAppoint, roomId, roomDesc, judgeCourtRunning, appId, appName, appSubId, appBy, judgeId, judgeGid, judgeGid2, judgeAid, judgeAid2, replaceJudgeFlag, replaceJudgeId, replaceJudgeAflag, replaceJudgeAflag2, adAssignFlag, adAssignFlag2, jptWit, prosWit, accuWit, otherWit, pageQty, pageQty2, pageQty3, appointOther, cancelFlag, delayId, delayName, cancelUserId, cancelUserName, cancelDate, cancelReason, resultId, resultName, appointResult, tranReq, tranLang, tranName, tranFrom, tranTo, tranAmt, tranAmtText, phycoReq, phycoName, phycoAmt, phycoAmtText, childReserveMor, childReserveEve, judgeBy, toCourtRunning, withdrawDoc, appealRunning, translaterFlag, pwAppoint, tableId, rowDisplay, attach1, attach2, printWitness1, printWitness2, statusId, remark, createDepCode, createUserId, createUser, createDate, updateDepCode, updateUserId, updateUser, updateDate, refId, refRoomId, remarkCopy, newSeq, oldSeq, refTime, refBlackTitle, refBlackId, refBlackYy, refCaseType, refBlackno, } = this;
+    const {
+      courtRunning, appRunning, runId, appSeq, dateAppoint, timeAppoint, roomId, roomDesc, judgeCourtRunning, appId,
+      appName, appSubId, appBy, judgeId, judgeGid, judgeGid2, judgeAid, judgeAid2, replaceJudgeFlag, replaceJudgeId,
+      replaceJudgeAflag, replaceJudgeAflag2, adAssignFlag, adAssignFlag2, jptWit, prosWit, accuWit, otherWit, pageQty,
+      pageQty2, pageQty3, appointOther, cancelFlag, delayId, delayName, cancelUserId, cancelUserName, cancelDate,
+      cancelReason, resultId, resultName, appointResult, tranReq, tranLang, tranName, tranFrom, tranTo, tranAmt,
+      tranAmtText, phycoReq, phycoName, phycoAmt, phycoAmtText, childReserveMor, childReserveEve, judgeBy, toCourtRunning,
+      withdrawDoc, appealRunning, translaterFlag, pwAppoint, tableId, rowDisplay, attach1, attach2, printWitness1,
+      printWitness2, statusId, remark, createDepCode, createUserId, createUser, createDate, updateDepCode, updateUserId,
+      updateUser, updateDate, refId, refRoomId, remarkCopy, newSeq, oldSeq, refTime, refBlackTitle, refBlackId,
+      refBlackYy, refCaseType, refBlackno
+    } = this;
+
     const responseObject = {
       appRunning, courtRunning, runId, appSeq,
       dateAppoint: dateAppoint ? this.dateFormat("YYYY-MM-DD", dateAppoint) : null,
-      timeAppoint: timeAppoint ? this.dateFormat("H:i", new Date(timeAppoint)) : null,
+      timeAppoint,
       roomId, roomDesc, judgeCourtRunning, appId, appName,
       appSubId, appBy, judgeId, judgeGid, judgeGid2, judgeAid, judgeAid2, replaceJudgeFlag, replaceJudgeId, replaceJudgeAflag,
       replaceJudgeAflag2, adAssignFlag, adAssignFlag2, jptWit, prosWit, accuWit, otherWit, pageQty, pageQty2, pageQty3, appointOther,

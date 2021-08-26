@@ -14,6 +14,8 @@ export class AppointmentController {
   // Get Method
   @Get()
   @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
+  @ApiQuery({ name: "timeEnd", required: false })
+  @ApiQuery({ name: "timeStart", required: false })
   @ApiQuery({ name: "dbtype", enum: ["mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
@@ -26,9 +28,11 @@ export class AppointmentController {
   }
 
   @Get(':start/:limit/pages')
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Pages" })
+  @ApiQuery({ name: "timeEnd", required: false })
+  @ApiQuery({ name: "timeStart", required: false })
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
-  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Pages" })
   @ApiQuery({ name: "dbtype", enum: ["mysql"] })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";

@@ -1,4 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { BeforeInsert, Column, CreateDateColumn, Entity, getManager, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { OracleProceedAppoints } from "./proceed-appoint.entity";
 
 @Entity({ name: "PC_PROCEED_APPOINT_CONTINUE" })
 export class OracleProceedAppointContinues {
@@ -20,9 +22,31 @@ export class OracleProceedAppointContinues {
   @UpdateDateColumn({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @UpdateDateColumn({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_PROCEED_APPOINT_CONTINUE_SEQ".nextval ID FROM DUAL`);
+      this.appointId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @ManyToOne(type => OracleProceedAppoints, continunes => continunes.appointId)
+  @JoinColumn({ name: "APPOINT_ID" }) proceedAppoints: OracleProceedAppoints;
+
   toResponseObject() {
-    const { appointConId, orderNo, appointTableId, appointId, choice, choiceTime, document, reasonAppointId, roomId, start, translate, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
+    const {
+      appointConId, orderNo, appointTableId, appointId, choice, choiceTime, document, reasonAppointId, roomId, start, translate, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate,
+      proceedAppoints
+    } = this;
     const responseObject = { appointConId, orderNo, appointTableId, appointId, choice, choiceTime, document, reasonAppointId, roomId, start, translate, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+
+    Object.assign(responseObject, {
+      proceedAppoints: proceedAppoints ? proceedAppoints.toResponseObject() : null
+    });
+
     return responseObject;
   }
 }

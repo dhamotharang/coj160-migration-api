@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { BeforeInsert, Column, Entity, getManager, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { OracleProceedAppoints } from "./proceed-appoint.entity";
 
 @Entity({ name: "PC_PROCEED_APPOINT_RESULT" })
 export class OracleProceedAppointResults {
@@ -17,8 +19,8 @@ export class OracleProceedAppointResults {
   @Column({ name: "END_TIME", nullable: true, comment: "เวลาสิ้นสุด" }) endTime: string;
   @Column({ name: "INVESTIGATE_ACCUSER", nullable: true, comment: "จำนวนปากของสืบพยานโจทก์" }) investigateAccuser: number;
   @Column({ name: "INVESTIGATE_ACCUSER_DATE", nullable: true, comment: "จำนวนวันของการสืบพยานโจทก์" }) investigateAccuserDate: number;
-  @Column({ name: "INVESTIGATE_DEFENDANT", nullable: true, comment: "จำนวนปากของสืบพยานจำเลย" }) investigateAccuserDefendant: number;
-  @Column({ name: "INVESTIGATE_DEFENDANT_DATE", nullable: true, comment: "จำนวนวันของการสืบพยานจำเลย" }) investigateAccuserDefendantDate: number;
+  @Column({ name: "INVESTIGATE_DEFENDANT", nullable: true, comment: "จำนวนปากของสืบพยานจำเลย" }) investigateDefendant: number;
+  @Column({ name: "INVESTIGATE_DEFENDANT_DATE", nullable: true, comment: "จำนวนวันของการสืบพยานจำเลย" }) investigateDefendantDate: number;
   @Column({ name: "INVESTIGATE_OTHER", nullable: true, comment: "จำนวนปากของสืบอื่น ๆ" }) investigateOther: number;
   @Column({ name: "INVESTIGATE_OTHER_DATE", nullable: true, comment: "จำนวนวันของการสืบอื่น ๆ" }) investigateOtherDate: number;
   @Column({ name: "INVESTIGATE_OTHER_DETAIL", nullable: true, comment: "รายละเอียดของสืบอื่น ๆ" }) investigateOtherDetail: string;
@@ -29,7 +31,7 @@ export class OracleProceedAppointResults {
   @Column({ name: "PLAINTIFF_TYPE", nullable: true, comment: "ตัวเลือกผู้ใดเป็นโจทก์ 1 = อัยการเป็นโจทก์, 2 = ราษฎร์เป็นโจทก์" }) plaintiffType: number;
   @Column({ name: "RELEASE", nullable: true, comment: "ตัวเลือกปล่อยตัวชั่วคราว" }) release: number;
   @Column({ name: "TWO_JUDGE", nullable: true, comment: "ตัวเลือกผู้พิพากษาสองนาย(ศาลจังหวัด)" }) twoJudge: number;
-  @Column({ name: "HOID_REASON_ID", nullable: true, comment: "รหัสสาเหตุที่ค้าง เชื่อมโยง PC_PROCEED_HOLD_REASON" }) hoidReasonId: number;
+  @Column({ name: "APPOINT_CON_ID", nullable: true }) appointConId: number;
   @Column({ name: "STATUS", nullable: true, comment: "รหัสสาเหตุที่ค้าง" }) status: number;
   @Column({ name: "CREATED_BY", comment: "รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
   @Column({ name: "UPDATED_BY", nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
@@ -38,9 +40,23 @@ export class OracleProceedAppointResults {
   @Column({ name: "UPDATED_DATE", type: "timestamp", nullable: true, comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", type: "timestamp", nullable: true, comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_PROCEED_APPOINT_RESULT_SEQ".nextval ID FROM DUAL`);
+      this.appointId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @ManyToOne(type => OracleProceedAppoints, continunes => continunes.appointId)
+  @JoinColumn({ name: "APPOINT_ID" }) proceedAppoints: OracleProceedAppoints;
+
   toResponseObject() {
-    const { appointResultId, orderNo, offenseDetail, appointById, appointDate, appointDelayId, appointId, apointTime, arrest, arrestDete, caseId, endDate, endTime, investigateAccuser, investigateAccuserDate, investigateAccuserDefendant, investigateAccuserDefendantDate, investigateOther, investigateOtherDate, investigateOtherDetail, noArrest, oneJudge, ownerDate, plaintiffId, plaintiffType, release, twoJudge, hoidReasonId, status, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { appointResultId, orderNo, offenseDetail, appointById, appointDate, appointDelayId, appointId, apointTime, arrest, arrestDete, caseId, endDate, endTime, investigateAccuser, investigateAccuserDate, investigateAccuserDefendant, investigateAccuserDefendantDate, investigateOther, investigateOtherDate, investigateOtherDetail, noArrest, oneJudge, ownerDate, plaintiffId, plaintiffType, release, twoJudge, hoidReasonId, status, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const { appointResultId, orderNo, offenseDetail, appointById, appointDate, appointDelayId, appointId, apointTime, arrest, arrestDete, caseId, endDate, endTime, investigateAccuser, investigateAccuserDate, investigateDefendant, investigateDefendantDate, investigateOther, investigateOtherDate, investigateOtherDetail, noArrest, oneJudge, ownerDate, plaintiffId, plaintiffType, release, twoJudge, status, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
+    const responseObject = { appointResultId, orderNo, offenseDetail, appointById, appointDate, appointDelayId, appointId, apointTime, arrest, arrestDete, caseId, endDate, endTime, investigateAccuser, investigateAccuserDate, investigateDefendant, investigateDefendantDate, investigateOther, investigateOtherDate, investigateOtherDetail, noArrest, oneJudge, ownerDate, plaintiffId, plaintiffType, release, twoJudge, status, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
     return responseObject;
   }
 }

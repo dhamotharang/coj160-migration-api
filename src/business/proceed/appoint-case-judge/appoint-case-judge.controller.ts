@@ -1,15 +1,13 @@
-import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AuthGaurd } from 'src/shared/guard/auth.guard';
+import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
-import { HoldReasonService } from './hold-reason.service';
+import { AppointCaseJudgeService } from './appoint-case-judge.service';
 
-@ApiTags("Proceed: Hold reason")
-@Controller('holdReason')
-export class HoldReasonController {
+@ApiTags("Proceed: Appoint case judge")
+@Controller('proceedAppointCaseJudge')
+export class AppointCaseJudgeController {
   constructor(
-    private mainService: HoldReasonService,
+    private mainService: AppointCaseJudgeService,
     private resdata: ResponseDataController
   ) { }
 
@@ -42,28 +40,5 @@ export class HoldReasonController {
 
     const resdata = await this.mainService[`find${dbtype}Data`](query, { start, limit });
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
-  }
-
-
-
-
-  // POST Method
-  @Post()
-  @ApiOperation({ summary: "เพิ่มข้อมูล" })
-  @ApiBearerAuth()
-  @UseGuards(new AuthGaurd())
-  async createData(@Res() res, @Req() req, @Body() body: OracleProceedHoldReasonDTO) {
-    Logger.log(body, "body");
-    const resdata = await this.mainService.createData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
-  }
-
-  @Post('migration')
-  @ApiOperation({ summary: "นำเข้าข้อมูล" })
-  @ApiBearerAuth()
-  @UseGuards(new AuthGaurd())
-  async createMigration(@Res() res, @Req() req, @Body() body) {
-    const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 }

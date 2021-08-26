@@ -1,25 +1,39 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppointModule } from '../appoint/appoint.module';
-import { MySQLAppointDelays } from '../appoint/entities/mysql/appoint-delay.entity';
-import { MySQLAppointments } from '../appoint/entities/mysql/appointment.entity';
+import { OracleProceedAppointCaseJudges } from './entities/oracle/proceed-appoint-case-judge.entity';
+import { OracleProceedAppointContinues } from './entities/oracle/proceed-appoint-continue.entity';
+import { OracleProceedAppointResults } from './entities/oracle/proceed-appoint-result.entity';
 import { OracleProceedAppoints } from './entities/oracle/proceed-appoint.entity';
 import { OracleProceedHoldReasons } from './entities/oracle/proceed-hold-reason.entity';
 import { HoldReasonController } from './hold-reason/hold-reason.controller';
 import { HoldReasonService } from './hold-reason/hold-reason.service';
-import { ProceedAppointController } from './proceed-appoint/proceed-appoint.controller';
-import { ProceedAppointService } from './proceed-appoint/proceed-appoint.service';
+import { AppointContinueController } from './appoint-continue/appoint-continue.controller';
+import { AppointContinueService } from './appoint-continue/appoint-continue.service';
+import { AppointCaseJudgeService } from './appoint-case-judge/appoint-case-judge.service';
+import { AppointCaseJudgeController } from './appoint-case-judge/appoint-case-judge.controller';
+import { AppointResultController } from './appoint-result/appoint-result.controller';
+import { AppointController } from './appoint/appoint.controller';
+import { AppointService } from './appoint/appoint.service';
+import { AppointResultService } from './appoint-result/appoint-result.service';
+import { CaseModule } from '../case/case.module';
+import { JudgeModule } from 'src/common/judge/judge.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       OracleProceedHoldReasons,
-      OracleProceedAppoints
+      OracleProceedAppoints,
+      OracleProceedAppointContinues,
+      OracleProceedAppointCaseJudges,
+      OracleProceedAppointResults
     ]),
-    AppointModule
+    AppointModule,
+    CaseModule,
+    JudgeModule
   ],
-  controllers: [HoldReasonController, ProceedAppointController],
-  providers: [HoldReasonService, ProceedAppointService],
+  controllers: [HoldReasonController, AppointContinueController, AppointCaseJudgeController, AppointResultController, AppointController],
+  providers: [HoldReasonService, AppointContinueService, AppointCaseJudgeService, AppointService, AppointResultService],
   exports: [HoldReasonService]
 })
 export class ProceedModule { }

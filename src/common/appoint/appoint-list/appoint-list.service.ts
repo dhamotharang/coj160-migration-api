@@ -139,20 +139,18 @@ export class AppointListService extends HelperService {
     }
   }
 
-  async findORACLEOneData(filters: any = null, holdReasonId: number = 0) {
+  async findORACLEOneData(filters: any = null, moduleId: number = 0) {
     try {
       const conditions = await this.oracleLookupAppointListReposities.createQueryBuilder("A");
 
-      await this.oracleFilter(conditions, filters, holdReasonId);
-
-      const total = 1;
+      await this.oracleFilter(conditions, filters, moduleId);
 
       const getItems = await conditions.getOne();
       const items = await (getItems ? getItems.toResponseObject() : null);
 
-      return { items, total };
+      return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find oracle one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find one appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
