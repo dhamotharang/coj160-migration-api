@@ -84,8 +84,7 @@ export class MigrationLogService {
 
   async findPOSTGRESData(filters: any = null, pages: any = null) {
     try {
-      const conditions = await this.migrationLogRepositories.createQueryBuilder("A")
-        .where("A.id <> 0");
+      const conditions = await this.migrationLogRepositories.createQueryBuilder("A");
 
       await this.postgresFilter(conditions, filters);
 

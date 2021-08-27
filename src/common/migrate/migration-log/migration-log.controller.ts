@@ -14,20 +14,20 @@ export class MigrationLogController {
 
   // GET Method
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
   @ApiOperation({ summary: "เรียกดูข้อมูลทั้งหมด" })
-  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
-    let dbtype = "ORACLE";
-    if (typeof query.dbtype !== "undefined") {
-      dbtype = query.dbtype.toUpperCase();
-    }
-
     const resdata = await this.mainService.findPOSTGRESData(query);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
   }
 
   @ApiQuery({ name: "text", required: false })
+  @ApiQuery({ name: "serverType", required: false })
+  @ApiQuery({ name: "status", required: false })
+  @ApiQuery({ name: "sourceDBType", required: false })
   @ApiQuery({ name: "sourceTableName", required: false })
+  @ApiQuery({ name: "sourceId", required: false })
   @ApiQuery({ name: "destinationTableName", required: false })
   @ApiParam({ name: "start" })
   @ApiParam({ name: "limit" })
