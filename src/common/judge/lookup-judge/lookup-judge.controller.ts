@@ -5,7 +5,7 @@ import { ResponseDataController } from 'src/shared/response/response-data.contro
 import { LookupJudgeService } from './lookup-judge.service';
 
 @ApiTags("Lookup: Judge")
-@Controller('lookupJudge')
+@Controller('lookup/judge')
 export class LookupJudgeController {
   constructor(
     private mainService: LookupJudgeService,

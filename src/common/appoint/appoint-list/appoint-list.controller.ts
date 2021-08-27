@@ -6,7 +6,7 @@ import { OracleLookupAppointListDTO } from '../dto/lookup-appoint-list.dto';
 import { AppointListService } from './appoint-list.service';
 
 @ApiTags("Lookup: Appoint list")
-@Controller('lookupAppointList')
+@Controller('lookup/appointList')
 export class AppointListController {
   constructor(
     private readonly mainService: AppointListService,

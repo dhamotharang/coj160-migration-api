@@ -2,14 +2,14 @@ import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '
 import { ApiQuery, ApiOperation, ApiParam, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { OracleLookupAppointTableDTO } from '../dto/lookup-appoint-table.dto';
-import { AppointTableService } from './appoint-table.service';
+import { OracleLookupNoticeSendResultDTO } from '../dto/lookup-notice-send-result.dto';
+import { NoticeSendResultService } from './notice-send-result.service';
 
-@ApiTags("Lookup: Appoint Table")
-@Controller('lookup/appointTable')
-export class AppointTableController {
+@ApiTags("Lookup: Notice send result")
+@Controller('lookup/noticeSendResult')
+export class NoticeSendResultController {
   constructor(
-    private mainService: AppointTableService,
+    private mainService: NoticeSendResultService,
     private resdata: ResponseDataController,
   ) { }
 
@@ -32,10 +32,6 @@ export class AppointTableController {
   @ApiParam({ name: "start" })
   @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   @ApiQuery({ name: "text", required: false })
-  @ApiQuery({ name: "orderNo", required: false })
-  @ApiQuery({ name: "activeFlag", required: false })
-  @ApiQuery({ name: "appointTableCode", required: false })
-  @ApiQuery({ name: "courtId", required: false })
   @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Page" })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
@@ -49,23 +45,21 @@ export class AppointTableController {
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
   }
 
-  @Get(':appointListId')
+  @Get(':id')
   @ApiOperation({ summary: "เรียกดูข้อมูลด้วย Id" })
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
   @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
-  @ApiParam({ name: "appointTableId" })
+  @ApiParam({ name: "id" })
   async findOneData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
       dbtype = query.dbtype.toUpperCase();
     }
 
-    const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
+    const resdata = await this.mainService[`find${dbtype}OneData`](null, param.id);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
   }
-
-
 
 
   // POST Method
@@ -73,7 +67,7 @@ export class AppointTableController {
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
   @ApiOperation({ summary: "เพิ่มข้อมูล" })
-  async createData(@Res() res, @Req() req, @Body() body: OracleLookupAppointTableDTO) {
+  async createData(@Res() res, @Req() req, @Body() body: OracleLookupNoticeSendResultDTO) {
     const resdata = await this.mainService.createData(999, body);
     return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }

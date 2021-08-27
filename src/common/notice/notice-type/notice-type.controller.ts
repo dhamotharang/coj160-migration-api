@@ -6,7 +6,7 @@ import { OracleLookupNoticeTypeDTO } from '../dto/lookup-notice-type.dto';
 import { NoticeTypeService } from './notice-type.service';
 
 @ApiTags("Lookup: Notice Type")
-@Controller('noticeType')
+@Controller('lookup/noticeType')
 export class NoticeTypeController {
   constructor(
     private mainService: NoticeTypeService,
