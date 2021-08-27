@@ -9,7 +9,16 @@ import { AppointModule } from './appoint/appoint.module';
 import { NoticeModule } from './notice/notice.module';
 
 @Module({
-  imports: [RequestModule, MigrateModule, SettingModule, OrganizationModule, JudgeModule, PersonModule, AppointModule, NoticeModule],
+  imports: [
+    MigrateModule,
+    RequestModule,
+    SettingModule,
+    OrganizationModule,
+    JudgeModule,
+    PersonModule,
+    AppointModule,
+    NoticeModule
+  ],
   controllers: []
 })
 export class CommonModule { }

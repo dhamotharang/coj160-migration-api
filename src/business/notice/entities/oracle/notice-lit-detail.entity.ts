@@ -1,7 +1,11 @@
+import { HelperService } from "src/shared/helpers/helper.service";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_LIT_DETAIL" })
-export class OracleNoticeLitDetails {
+export class OracleNoticeLitDetails extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "DETAIL_ID", comment: "รหัสข้อมูลรายละเอียดคู่ความในหมายประกาศ(AUTO INCREMENT)" }) detailId: number;
   @Column({ name: "ORDER_NO", type: "float", comment: "วันเวลาที่สร้างข้อมูล" }) orderNo: number;
   @Column({ name: "BY_CASE_LIT_ID", comment: "รหัสคู่ความที่สร้างหมาย เชื่อมโยง PC_CASE_LIT" }) byCaseLitId: number;
@@ -26,7 +30,13 @@ export class OracleNoticeLitDetails {
 
   toResponseObject() {
     const { detailId, orderNo, byCaseLitId, byLitType, byName, isSendToAgent, lawyerId, needReplaceByName, needReplaceToName, noticeId, seq, toCaseLitId, toLitType, toName, toWitnessId, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { detailId, orderNo, byCaseLitId, byLitType, byName, isSendToAgent, lawyerId, needReplaceByName, needReplaceToName, noticeId, seq, toCaseLitId, toLitType, toName, toWitnessId, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const responseObject = {
+      detailId, orderNo, byCaseLitId, byLitType, byName, isSendToAgent, lawyerId, needReplaceByName, needReplaceToName, noticeId,
+      seq, toCaseLitId, toLitType, toName, toWitnessId, createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }

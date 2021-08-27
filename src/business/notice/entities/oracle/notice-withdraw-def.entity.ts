@@ -1,7 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { HelperService } from "src/shared/helpers/helper.service";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_WITHDRAW_DEF" })
-export class OracleNoticeWithdrawDefs {
+export class OracleNoticeWithdrawDefs extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "WITHDRAW_ID", comment: "รหัสข้อมูลเบิกตัวผู้ต้องขัง(AUTO INCREMENT)" }) withdrawId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "ลำดับของข้อมูล" }) orderNo: number;
   @Column({ name: "ANSWER_NOTICE", nullable: true, comment: "สอบคำให้การ" }) answerNotice: number;
@@ -32,9 +37,28 @@ export class OracleNoticeWithdrawDefs {
   @Column({ name: "UPDATED_DATE", type: "timestamp", nullable: true, comment: "วันเวลาที่ลบข้อมูล" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", type: "timestamp", nullable: true, comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_NOTICE_WITHDRAW_DEF_SEQ".nextval ID FROM DUAL`);
+      this.noticeId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: notice withdraw def before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   toResponseObject() {
     const { withdrawId, orderNo, answerNotice, caseId, caseResultId, courtId, dayOfAppointment, dayOfDealine, detaineeName, endNoticeId, judgeId, noticeId, prisonId, selectDocument, toCourtDate, withdrawFromDate, withdrawNote, withdrawPrintDate, withdrawSex, withdrawToDate, withdrawTotal, appointListId, withdrawName, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { withdrawId, orderNo, answerNotice, caseId, caseResultId, courtId, dayOfAppointment, dayOfDealine, detaineeName, endNoticeId, judgeId, noticeId, prisonId, selectDocument, toCourtDate, withdrawFromDate, withdrawNote, withdrawPrintDate, withdrawSex, withdrawToDate, withdrawTotal, appointListId, withdrawName, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const responseObject = {
+      withdrawId, orderNo, answerNotice, caseId, caseResultId, courtId, dayOfAppointment, dayOfDealine,
+      detaineeName, endNoticeId, judgeId, noticeId, prisonId, selectDocument, toCourtDate, withdrawFromDate,
+      withdrawNote, withdrawPrintDate, withdrawSex, withdrawToDate, withdrawTotal, appointListId, withdrawName,
+      createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }

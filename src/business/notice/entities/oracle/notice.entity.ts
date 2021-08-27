@@ -1,7 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { HelperService } from "src/shared/helpers/helper.service";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE" })
-export class OracleNotices {
+export class OracleNotices extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "NOTICE_ID", comment: "รหัสข้อมูลหมายประกาศ(AUTO INCREMENT)" }) noticeId: number;
   @Column({ name: "ORDER_NO", type: "float", comment: "ลำดับของข้อมูล" }) orderNo: number;
   @Column({ name: "ADDRESS", nullable: true, comment: "เลขที่อยู่" }) address: string;
@@ -100,9 +105,36 @@ export class OracleNotices {
   @Column({ name: "UPDATED_DATE", type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_NOTICE_SEQ".nextval ID FROM DUAL`);
+      this.noticeId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: notice before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   toResponseObject() {
     const { noticeId, orderNo, address, addressNearLocation, addressPlace, allegationDetail, allegationId, alley, appointListCode, appointListName, cancelReason, cancelStatus, caseId, courtId, courtType, currentDistrictId, currentPostCode, currentProvinceId, currentSubdistrictId, decreeNo, departmentId, imprisonDay, imprisonNote, imprisonedDays, isCancel, isCountryArea, isCourtArea, judgeId, lawNumber, litigantId, litigantRank, litigantReceivedDate, moo, noticeAllday, noticeCodeNo, noticeCodeYear, noticeColor, noticeDate, noticeIsAgent, noticePrint, noticeReason, noticeSendStatus, noticeTypeCode, noticeTypeId, noticeTypeName, officerReceivedBy, orderSendMethod, phoneNumber, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prisonId, receivedBy, releaseDate, road, section, sendBy, sendDate, sendFee, sendMethod, sendToCourt, sineTheDate, telephoneAgency, typeOfSubpoena, unsendDetail, litigantName, alleDesc, endNoticeId, noticeTypeCodeRef, noticeTypeIdRef, noticeReleaseNotice, noticeSendResultStatus, backpage, impirson, imprisonment, noticeNowReson, rubberStamp, careTaker, courtAppointDate, courtCommand, currentStatus, prisoner, endNoticeName, noticeRedDate, bookAccoutId, litigantTypeId, imprisonDetail, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { noticeId, orderNo, address, addressNearLocation, addressPlace, allegationDetail, allegationId, alley, appointListCode, appointListName, cancelReason, cancelStatus, caseId, courtId, courtType, currentDistrictId, currentPostCode, currentProvinceId, currentSubdistrictId, decreeNo, departmentId, imprisonDay, imprisonNote, imprisonedDays, isCancel, isCountryArea, isCourtArea, judgeId, lawNumber, litigantId, litigantRank, litigantReceivedDate, moo, noticeAllday, noticeCodeNo, noticeCodeYear, noticeColor, noticeDate, noticeIsAgent, noticePrint, noticeReason, noticeSendStatus, noticeTypeCode, noticeTypeId, noticeTypeName, officerReceivedBy, orderSendMethod, phoneNumber, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prisonId, receivedBy, releaseDate, road, section, sendBy, sendDate, sendFee, sendMethod, sendToCourt, sineTheDate, telephoneAgency, typeOfSubpoena, unsendDetail, litigantName, alleDesc, endNoticeId, noticeTypeCodeRef, noticeTypeIdRef, noticeReleaseNotice, noticeSendResultStatus, backpage, impirson, imprisonment, noticeNowReson, rubberStamp, careTaker, courtAppointDate, courtCommand, currentStatus, prisoner, endNoticeName, noticeRedDate, bookAccoutId, litigantTypeId, imprisonDetail, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const responseObject = {
+      noticeId, orderNo, address, addressNearLocation, addressPlace, allegationDetail, allegationId, alley, appointListCode,
+      appointListName, cancelReason, cancelStatus, caseId, courtId, courtType, currentDistrictId, currentPostCode,
+      currentProvinceId, currentSubdistrictId, decreeNo, departmentId, imprisonDay, imprisonNote, imprisonedDays,
+      isCancel, isCountryArea, isCourtArea, judgeId, lawNumber, litigantId, litigantRank, litigantReceivedDate,
+      moo, noticeAllday, noticeCodeNo, noticeCodeYear, noticeColor, noticeDate, noticeIsAgent, noticePrint,
+      noticeReason, noticeSendStatus, noticeTypeCode, noticeTypeId, noticeTypeName, officerReceivedBy, orderSendMethod,
+      phoneNumber, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate,
+      prisonId, receivedBy, releaseDate, road, section, sendBy, sendDate, sendFee, sendMethod, sendToCourt, sineTheDate,
+      telephoneAgency, typeOfSubpoena, unsendDetail, litigantName, alleDesc, endNoticeId, noticeTypeCodeRef, noticeTypeIdRef,
+      noticeReleaseNotice, noticeSendResultStatus, backpage, impirson, imprisonment, noticeNowReson, rubberStamp, careTaker,
+      courtAppointDate, courtCommand, currentStatus, prisoner, endNoticeName, noticeRedDate, bookAccoutId, litigantTypeId,
+      imprisonDetail, createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }

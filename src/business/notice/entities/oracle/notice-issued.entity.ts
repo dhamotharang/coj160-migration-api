@@ -1,7 +1,11 @@
+import { HelperService } from "src/shared/helpers/helper.service";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_ISSUED" })
-export class OracleNoticeIssueds {
+export class OracleNoticeIssueds extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "ISSUED_ID", comment: "รหัสข้อมูลการจ่ายหมาย(AUTO INCREMENT)" }) issuedId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "วันเวลาที่สร้างข้อมูล" }) orderNo: number;
   @Column({ name: "EMS_CODE", nullable: true, comment: "หมายเลข EMS" }) emsCode: string;
@@ -26,7 +30,13 @@ export class OracleNoticeIssueds {
 
   toResponseObject() {
     const { issuedId, orderNo, emsCode, hasMoney, isCancelIssued, isCourtArea, notes, noticeId, receiptId, receivedNoticeDate, sendNoticeDate, pnType, subdistrictName, chequeNo, payDate, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { issuedId, orderNo, emsCode, hasMoney, isCancelIssued, isCourtArea, notes, noticeId, receiptId, receivedNoticeDate, sendNoticeDate, pnType, subdistrictName, chequeNo, payDate, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const responseObject = {
+      issuedId, orderNo, emsCode, hasMoney, isCancelIssued, isCourtArea, notes, noticeId, receiptId, receivedNoticeDate, sendNoticeDate,
+      pnType, subdistrictName, chequeNo, payDate, createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }

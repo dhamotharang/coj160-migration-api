@@ -1,7 +1,11 @@
+import { HelperService } from "src/shared/helpers/helper.service";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_PROVINCIAL" })
-export class OracleNoticeProvincials {
+export class OracleNoticeProvincials extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "NOTICE_PROVINCIAL_ID", comment: "รหัสข้อมูลหมายต่างจังหวัด(AUTO INCREMENT)" }) noticeProvincialId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "ลำดับของข้อมูล" }) orderNo: number;
   @Column({ name: "ACCU_DESC", nullable: true, comment: "ชื่อโจทย์" }) accuDesc: string;
@@ -61,7 +65,18 @@ export class OracleNoticeProvincials {
 
   toResponseObject() {
     const { noticeProvincialId, orderNo, accuDesc, address, addressNearLocation, addressPlace, allegationDetail, alley, balckIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode, currentProvinceId, currentSubdistrictId, isCancel, isCourtArea, litigantReceivedDate, moo, noticeCodeNo, noticeCodeYear, noticePrint, noticeSendStatus, noticeTypeId, officerReceivedBy, orderSendMethod, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prosDesc, receivedBy, referDoc, releaseDate, road, sendBy, sendDate, sendFee, sendMethod, tel, unsendDetail, litTypeId, litigantName, noticeSendResultStatus, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate } = this;
-    const responseObject = { noticeProvincialId, orderNo, accuDesc, address, addressNearLocation, addressPlace, allegationDetail, alley, balckIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode, currentProvinceId, currentSubdistrictId, isCancel, isCourtArea, litigantReceivedDate, moo, noticeCodeNo, noticeCodeYear, noticePrint, noticeSendStatus, noticeTypeId, officerReceivedBy, orderSendMethod, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prosDesc, receivedBy, referDoc, releaseDate, road, sendBy, sendDate, sendFee, sendMethod, tel, unsendDetail, litTypeId, litigantName, noticeSendResultStatus, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate };
+    const responseObject = {
+      noticeProvincialId, orderNo, accuDesc, address, addressNearLocation, addressPlace, allegationDetail, alley,
+      balckIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode,
+      currentProvinceId, currentSubdistrictId, isCancel, isCourtArea, litigantReceivedDate, moo, noticeCodeNo,
+      noticeCodeYear, noticePrint, noticeSendStatus, noticeTypeId, officerReceivedBy, orderSendMethod, postDebtDate,
+      postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prosDesc, receivedBy,
+      referDoc, releaseDate, road, sendBy, sendDate, sendFee, sendMethod, tel, unsendDetail, litTypeId, litigantName,
+      noticeSendResultStatus, createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }

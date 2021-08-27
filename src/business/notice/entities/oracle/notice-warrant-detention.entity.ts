@@ -1,7 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { HelperService } from "src/shared/helpers/helper.service";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_WARRANT_DETENTION" })
-export class OracleNoticeWarrantDetentions {
+export class OracleNoticeWarrantDetentions extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "WARRANT_DETENTION_ID", comment: "รหัสข้อมูลรายละเอียดเบิกตัวผู้ต้องขัง(AUTO INCREMENT)" }) warrantDetentionId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "ลำดับของข้อมูล" }) orderNo: number;
   @Column({ name: "LITIGANT_ID", nullable: true, comment: "รหัสคู่ความ เชื่อมโยง PC_CASE_LIT" }) litigantId: number;
@@ -19,9 +24,26 @@ export class OracleNoticeWarrantDetentions {
   @Column({ name: "UPDATED_DATE", nullable: true, comment: "วันเวลาที่แก้ไขข้อมูล" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", nullable: true, comment: "วันเวลาที่ลบข้อมูลล่าสุด" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_NOTICE_WARRANT_DETENTION_SEQ".nextval ID FROM DUAL`);
+      this.warrantDetentionId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: notice warrant detention before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   toResponseObject() {
     const { warrantDetentionId, orderNo, litigantId, litigantName, noticeGuarantee, noticeGuaranteeStatus, noticeId, prisonId, prisonName, warrantAlleDesc, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { warrantDetentionId, orderNo, litigantId, litigantName, noticeGuarantee, noticeGuaranteeStatus, noticeId, prisonId, prisonName, warrantAlleDesc, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const responseObject = {
+      warrantDetentionId, orderNo, litigantId, litigantName, noticeGuarantee, noticeGuaranteeStatus, noticeId, prisonId,
+      prisonName, warrantAlleDesc, createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }

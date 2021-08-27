@@ -1,7 +1,11 @@
+import { HelperService } from "src/shared/helpers/helper.service";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_APPOINT_DETAIL" })
-export class OracleNoticeAppointDetails {
+export class OracleNoticeAppointDetails extends HelperService {
+  constructor() {
+    super();
+  }
   @PrimaryGeneratedColumn({ name: "APPOINT_ID", comment: "รหัสข้อมูลรายละเอียดนัดในหมายประกาศ(AUTO INCREMENT)" }) appointId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "วันเวลาที่สร้างข้อมูล" }) orderNo: number;
   @Column({ name: "APPOINT_DATE", type: "timestamp", comment: "วันที่และเวลาที่นัด" }) appointDate: Date;
@@ -17,7 +21,12 @@ export class OracleNoticeAppointDetails {
 
   toResponseObject() {
     const { appointId, orderNo, appointDate, appointDetail, appointListId, noticeId, createdBy, updatedBy, removedBy, createdDate, removedDate, updatedDate } = this;
-    const responseObject = { appointId, orderNo, appointDate, appointDetail, appointListId, noticeId, createdBy, updatedBy, removedBy, createdDate, removedDate, updatedDate };
+    const responseObject = {
+      appointId, orderNo, appointDate, appointDetail, appointListId, noticeId, createdBy, updatedBy, removedBy,
+      createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
+      removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
+      updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,
+    };
     return responseObject;
   }
 }
