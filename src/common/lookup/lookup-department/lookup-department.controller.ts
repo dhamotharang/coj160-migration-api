@@ -1,14 +1,13 @@
-import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AuthGaurd } from 'src/shared/guard/auth.guard';
+import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
+import { ApiTags, ApiQuery, ApiParam, ApiOperation } from '@nestjs/swagger';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { DepartmentService } from './department.service';
+import { LookupDepartmentService } from './lookup-department.service';
 
-@ApiTags("Organization: Department")
-@Controller('department')
-export class DepartmentController {
+@ApiTags("Lookup: Department")
+@Controller('lookup/department')
+export class LookupDepartmentController {
   constructor(
-    private readonly mainService: DepartmentService,
+    private readonly mainService: LookupDepartmentService,
     private readonly resdata: ResponseDataController
   ) { }
 

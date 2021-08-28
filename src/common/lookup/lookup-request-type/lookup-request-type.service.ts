@@ -1,16 +1,15 @@
-import { Logger } from '@nestjs/common';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { LookupRequestTypeDTO } from '../dto/oracle/lookup-request-type.dto';
+import { LookupRequestTypeDTO } from '../dto/lookup-request-type.dto';
 import { MySQLRequestTypes } from '../entities/mysql/request-type.entity';
 import { OracleLookupRequestTypes } from '../entities/oracle/lookup-request-type.entity';
 
 @Injectable()
-export class RequestTypeService extends HelperService {
+export class LookupRequestTypeService extends HelperService {
   constructor(
     @InjectRepository(OracleLookupRequestTypes) private readonly oracleLookupRequestTypeRepositories: Repository<OracleLookupRequestTypes>,
     @InjectRepository(MySQLRequestTypes, "mysql") private readonly mysqlRequestTypeRepositories: Repository<MySQLRequestTypes>,

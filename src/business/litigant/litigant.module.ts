@@ -8,9 +8,8 @@ import { RequestService } from './request/request.service';
 import { RequestController } from './request/request.controller';
 import { MySQLRequests } from './entities/mysql/request.entity';
 import { CaseModule } from '../case/case.module';
-import { RequestModule } from 'src/common/request/request.module';
 import { PersonModule } from 'src/common/person/person.module';
-import { OrganizationModule } from 'src/common/organization/organization.module';
+import { LookupModule } from 'src/common/lookup/lookup.module';
 
 @Module({
   imports: [
@@ -20,9 +19,8 @@ import { OrganizationModule } from 'src/common/organization/organization.module'
       MySQLRequests
     ], "mysql"),
     CaseModule,
-    RequestModule,
     PersonModule,
-    OrganizationModule
+    LookupModule
   ],
   controllers: [LitigantController, RequestController],
   providers: [LitigantService, RequestService]

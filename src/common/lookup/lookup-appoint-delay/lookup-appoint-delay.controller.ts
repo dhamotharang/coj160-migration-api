@@ -1,4 +1,6 @@
 import { Controller } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('lookup-appoint-delay')
-export class LookupAppointDelayController {}
+@ApiTags("Lookup: Appoint delay")
+@Controller('lookup/appointDelay')
+export class LookupAppointDelayController { }

@@ -1,11 +1,9 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
-import { DepartmentService } from 'src/common/organization/department/department.service';
-import { MySQLDepartments } from 'src/common/organization/entities/mysql/department.entity';
+import { MySQLDepartments } from 'src/common/lookup/entities/mysql/department.entity';
 import { OfficerService } from 'src/common/person/officer/officer.service';
 import { UserProfileService } from 'src/common/person/user-profile/user-profile.service';
-import { RequestTypeService } from 'src/common/request/request-type/request-type.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
@@ -14,6 +12,8 @@ import { OracleLitigantDTO } from './dto/litigant.dto';
 import { MySQLCaseLitigants } from './entities/mysql/case-litigant.entity';
 import { MySQLRequests } from './entities/mysql/request.entity';
 import { OracleLitigants } from './entities/oracle/litigant.entity';
+import { LookupDepartmentService } from 'src/common/lookup/lookup-department/lookup-department.service';
+import { LookupRequestTypeService } from 'src/common/lookup/lookup-request-type/lookup-request-type.service';
 
 @Injectable()
 export class LitigantService extends HelperService {
@@ -24,9 +24,9 @@ export class LitigantService extends HelperService {
     private readonly migrateLogService: MigrationLogService,
     private readonly paramService: ParamService,
     private readonly caseService: CaseService,
-    private readonly requestTypeService: RequestTypeService,
+    private readonly requestTypeService: LookupRequestTypeService,
     private readonly officerService: OfficerService,
-    private readonly departmentService: DepartmentService,
+    private readonly departmentService: LookupDepartmentService,
     private readonly userProfileService: UserProfileService,
   ) {
     super();

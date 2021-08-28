@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Logger, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { LookupRequestTypeDTO } from '../dto/oracle/lookup-request-type.dto';
-import { RequestTypeService } from './request-type.service';
+import { LookupRequestTypeDTO } from '../dto/lookup-request-type.dto';
+import { LookupRequestTypeService } from './lookup-request-type.service';
 
-@ApiTags("Request Type")
-@Controller('requestType')
-export class RequestTypeController {
+@ApiTags("Lookup: Request type")
+@Controller('lookup/requestType')
+export class LookupRequestTypeController {
   constructor(
-    private readonly mainService: RequestTypeService,
+    private readonly mainService: LookupRequestTypeService,
     private readonly resdata: ResponseDataController
   ) { }
 

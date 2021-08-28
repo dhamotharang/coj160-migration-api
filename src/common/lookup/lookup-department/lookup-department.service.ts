@@ -7,7 +7,7 @@ import { MySQLDepartments } from '../entities/mysql/department.entity';
 import { OracleLookupDepartments } from '../entities/oracle/lookup-department.entity';
 
 @Injectable()
-export class DepartmentService extends HelperService {
+export class LookupDepartmentService extends HelperService {
   constructor(
     @InjectRepository(OracleLookupDepartments)
     private readonly oracleLookupDepartmentRepositories: Repository<OracleLookupDepartments>,

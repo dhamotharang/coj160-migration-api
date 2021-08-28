@@ -1,7 +1,5 @@
-import { Body, Controller, Get, Logger, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { LookupRequestTypeDTO } from 'src/common/request/dto/oracle/lookup-request-type.dto';
-import { AuthGaurd } from 'src/shared/guard/auth.guard';
+import { Controller, Get, Logger, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { UserProfileService } from './user-profile.service';
 

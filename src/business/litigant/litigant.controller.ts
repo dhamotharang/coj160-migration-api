@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { OracleLookupRequestSubjectDTO } from 'src/common/request/dto/oracle/lookup-request-subject.dto';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OracleLitigantDTO } from './dto/litigant.dto';

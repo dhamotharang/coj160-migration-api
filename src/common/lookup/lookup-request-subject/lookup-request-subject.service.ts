@@ -1,18 +1,20 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
+import { OracleLookupRequestSubjectDTO } from 'src/common/lookup/dto/lookup-request-subject.dto';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { OracleLookupRequestSubjectDTO } from '../dto/oracle/lookup-request-subject.dto';
 import { MySQLRequestSubjects } from '../entities/mysql/request-subject.entity';
 import { OracleLookupRequestSubjects } from '../entities/oracle/lookup-request-subject.entity';
 
 @Injectable()
-export class RequestSubjectService extends HelperService {
+export class LookupRequestSubjectService extends HelperService {
   constructor(
-    @InjectRepository(OracleLookupRequestSubjects) private readonly oracleLookUpRequestSubjectRepositories: Repository<OracleLookupRequestSubjects>,
-    @InjectRepository(MySQLRequestSubjects, "mysql") private readonly mySQLRequestSubjectsRepositories: Repository<MySQLRequestSubjects>,
+    @InjectRepository(OracleLookupRequestSubjects)
+    private readonly oracleLookUpRequestSubjectRepositories: Repository<OracleLookupRequestSubjects>,
+    @InjectRepository(MySQLRequestSubjects, "mysql")
+    private readonly mySQLRequestSubjectsRepositories: Repository<MySQLRequestSubjects>,
     private readonly migrateLogService: MigrationLogService,
     private readonly paramService: ParamService
   ) {

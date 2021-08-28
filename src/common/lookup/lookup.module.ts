@@ -2,14 +2,12 @@ import { Module } from '@nestjs/common';
 import { LookupNoticeTypeController } from './lookup-notice-type/lookup-notice-type.controller';
 import { LookupNoticeTypeService } from './lookup-notice-type/lookup-notice-type.service';
 import { LookupAllegationService } from './lookup-allegation/lookup-allegation.service';
-import { LookupAppointService } from './lookup-appoint/lookup-appoint.service';
 import { LookupJudgeService } from './lookup-judge/lookup-judge.service';
 import { LookupNoticeSendResultService } from './lookup-notice-send-result/lookup-notice-send-result.service';
 import { LookupNoticeSendMethodService } from './lookup-notice-send-method/lookup-notice-send-method.service';
 import { LookupNoticeSendResultController } from './lookup-notice-send-result/lookup-notice-send-result.controller';
 import { LookupNoticeSendMethodController } from './lookup-notice-send-method/lookup-notice-send-method.controller';
 import { LookupJudgeController } from './lookup-judge/lookup-judge.controller';
-import { LookupAppointController } from './lookup-appoint/lookup-appoint.controller';
 import { LookupAllegationController } from './lookup-allegation/lookup-allegation.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OracleLookupAllegations } from './entities/oracle/lookup-allegation.entity';
@@ -32,6 +30,18 @@ import { OracleLookupNoticeSendResults } from './entities/oracle/lookup-notice-s
 import { MySQLNoticeSendResults } from './entities/mysql/notice-send-result.entity';
 import { OracleLookupSendMethods } from './entities/oracle/lookup-send-method.entity';
 import { MySQLNoticeSendTypes } from './entities/mysql/notice-send-type.entity';
+import { LookupDepartmentController } from './lookup-department/lookup-department.controller';
+import { LookupDepartmentService } from './lookup-department/lookup-department.service';
+import { OracleLookupDepartments } from './entities/oracle/lookup-department.entity';
+import { MySQLDepartments } from './entities/mysql/department.entity';
+import { LookupRequestSubjectController } from './lookup-request-subject/lookup-request-subject.controller';
+import { LookupRequestSubjectService } from './lookup-request-subject/lookup-request-subject.service';
+import { LookupRequestTypeService } from './lookup-request-type/lookup-request-type.service';
+import { LookupRequestTypeController } from './lookup-request-type/lookup-request-type.controller';
+import { OracleLookupRequestSubjects } from './entities/oracle/lookup-request-subject.entity';
+import { MySQLRequestSubjects } from './entities/mysql/request-subject.entity';
+import { OracleLookupRequestTypes } from './entities/oracle/lookup-request-type.entity';
+import { MySQLRequestTypes } from './entities/mysql/request-type.entity';
 
 @Module({
   imports: [
@@ -43,7 +53,10 @@ import { MySQLNoticeSendTypes } from './entities/mysql/notice-send-type.entity';
       OracleLookupNoticeTypes,
       OracleLookupJudges,
       OracleLookupNoticeSendResults,
-      OracleLookupSendMethods
+      OracleLookupSendMethods,
+      OracleLookupDepartments,
+      OracleLookupRequestSubjects,
+      OracleLookupRequestTypes
     ]),
     TypeOrmModule.forFeature([
       MySQLAppointDelays,
@@ -51,7 +64,10 @@ import { MySQLNoticeSendTypes } from './entities/mysql/notice-send-type.entity';
       MySQLNoticeTypes,
       MySQLJudges,
       MySQLNoticeSendResults,
-      MySQLNoticeSendTypes
+      MySQLNoticeSendTypes,
+      MySQLDepartments,
+      MySQLRequestSubjects,
+      MySQLRequestTypes
     ], "mysql"),
   ],
   controllers: [
@@ -59,33 +75,39 @@ import { MySQLNoticeSendTypes } from './entities/mysql/notice-send-type.entity';
     LookupNoticeSendResultController,
     LookupNoticeSendMethodController,
     LookupJudgeController,
-    LookupAppointController,
     LookupAllegationController,
     LookupAppointDelayController,
     LookupAppointListController,
-    LookupAppointTableController
+    LookupAppointTableController,
+    LookupDepartmentController,
+    LookupRequestSubjectController,
+    LookupRequestTypeController
   ],
   providers: [
     LookupNoticeTypeService,
     LookupAllegationService,
-    LookupAppointService,
     LookupJudgeService,
     LookupNoticeSendResultService,
     LookupNoticeSendMethodService,
     LookupAppointTableService,
     LookupAppointDelayService,
-    LookupAppointListService
+    LookupAppointListService,
+    LookupDepartmentService,
+    LookupRequestSubjectService,
+    LookupRequestTypeService
   ],
   exports: [
     LookupNoticeTypeService,
     LookupAllegationService,
-    LookupAppointService,
     LookupJudgeService,
     LookupNoticeSendResultService,
     LookupNoticeSendMethodService,
     LookupAppointTableService,
     LookupAppointDelayService,
-    LookupAppointListService
+    LookupAppointListService,
+    LookupDepartmentService,
+    LookupRequestSubjectService,
+    LookupRequestTypeService
   ]
 })
 export class LookupModule { }

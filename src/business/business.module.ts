@@ -6,7 +6,6 @@ import { LitigantModule } from './litigant/litigant.module';
 import { NoticeModule } from './notice/notice.module';
 import { ProceedModule } from './proceed/proceed.module';
 import { StatModule } from './stat/stat.module';
-import { PcLaborModule } from './pc-labor/pc-labor.module';
 import { AppointModule } from './appoint/appoint.module';
 
 @Module({
@@ -18,7 +17,6 @@ import { AppointModule } from './appoint/appoint.module';
     NoticeModule,
     ProceedModule,
     StatModule,
-    PcLaborModule,
     AppointModule,
   ]
 })

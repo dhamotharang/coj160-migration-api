@@ -1,4 +1,6 @@
 import { Controller } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
-@Controller('lookup-allegation')
-export class LookupAllegationController {}
+@ApiTags("Lookup: Allegation")
+@Controller('lookup/allegation')
+export class LookupAllegationController { }
