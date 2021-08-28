@@ -1,7 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
-import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
 import { OracleLitigantDTO } from '../litigant/dto/litigant.dto';
@@ -13,8 +11,6 @@ export class CaseService extends HelperService {
   constructor(
     @InjectRepository(OracleCases) private readonly oracleLitigantRepositories: Repository<OracleCases>,
     @InjectRepository(MySQLCases, "mysql") private readonly mysqlLitigantRepositories: Repository<MySQLCases>,
-    private readonly migrateLogService: MigrationLogService,
-    private readonly paramService: ParamService
   ) {
     super();
   }

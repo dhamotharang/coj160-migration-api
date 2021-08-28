@@ -2,10 +2,10 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AppointmentService } from 'src/business/appoint/appointment/appointment.service';
 import { CaseService } from 'src/business/case/case.service';
-import { AppointDelayService } from 'src/common/appoint/appoint-delay/appoint-delay.service';
-import { AppointListService } from 'src/common/appoint/appoint-list/appoint-list.service';
-import { AppointTableService } from 'src/common/appoint/appoint-table/appoint-table.service';
-import { LookupJudgeService } from 'src/common/judge/lookup-judge/lookup-judge.service';
+import { LookupAppointDelayService } from 'src/common/lookup/lookup-appoint-delay/lookup-appoint-delay.service';
+import { LookupAppointListService } from 'src/common/lookup/lookup-appoint-list/lookup-appoint-list.service';
+import { LookupAppointTableService } from 'src/common/lookup/lookup-appoint-table/lookup-appoint-table.service';
+import { LookupJudgeService } from 'src/common/lookup/lookup-judge/lookup-judge.service';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
@@ -26,13 +26,13 @@ export class AppointService extends HelperService {
     private migrateLogService: MigrationLogService,
     private appointmentService: AppointmentService,
     private caseService: CaseService,
-    private appointTableService: AppointTableService,
-    private appointListService: AppointListService,
+    private appointTableService: LookupAppointTableService,
+    private appointListService: LookupAppointListService,
     private appointContinueSevice: AppointContinueService,
     private appointCaseJudgeService: AppointCaseJudgeService,
     private lookupJudgeService: LookupJudgeService,
     private appointResultService: AppointResultService,
-    private appointDelayService: AppointDelayService,
+    private appointDelayService: LookupAppointDelayService,
     private holdReasonService: HoldReasonService
   ) {
     super();

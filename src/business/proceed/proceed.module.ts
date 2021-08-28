@@ -17,7 +17,7 @@ import { AppointController } from './appoint/appoint.controller';
 import { AppointService } from './appoint/appoint.service';
 import { AppointResultService } from './appoint-result/appoint-result.service';
 import { CaseModule } from '../case/case.module';
-import { JudgeModule } from 'src/common/judge/judge.module';
+import { LookupModule } from 'src/common/lookup/lookup.module';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { JudgeModule } from 'src/common/judge/judge.module';
     ]),
     AppointModule,
     CaseModule,
-    JudgeModule
+    LookupModule
   ],
   controllers: [HoldReasonController, AppointContinueController, AppointCaseJudgeController, AppointResultController, AppointController],
   providers: [HoldReasonService, AppointContinueService, AppointCaseJudgeService, AppointService, AppointResultService],

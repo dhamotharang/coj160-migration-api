@@ -1,21 +1,19 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LookupAppointDelayService } from 'src/common/lookup/lookup-appoint-delay/lookup-appoint-delay.service';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
-import { Repository } from 'typeorm';
-import { OracleProceedHoldReasonDTO } from '../dto/proceed-hold-reason.dto';
-import { OracleProceedHoldReasons } from '../entities/oracle/proceed-hold-reason.entity';
+import { Repository, getManager } from 'typeorm';
+import { OracleLookupAppointListDTO } from '../dto/lookup-appoint-list.dto';
+import { OracleLookupAppointLists } from '../entities/oracle/lookup-appoint-list.entity';
 
 @Injectable()
-export class HoldReasonService extends HelperService {
+export class LookupAppointListService extends HelperService {
   constructor(
-    @InjectRepository(OracleProceedHoldReasons)
-    private oracleProceedHoldReasonsRepositories: Repository<OracleProceedHoldReasons>,
-    private paramService: ParamService,
-    private migrateLogService: MigrationLogService,
-    private appointDelayService: LookupAppointDelayService,
+    @InjectRepository(OracleLookupAppointLists)
+    private readonly oracleLookupAppointListReposities: Repository<OracleLookupAppointLists>,
+    private readonly paramService: ParamService,
+    private readonly migrateLogService: MigrationLogService,
   ) {
     super();
   }
@@ -24,14 +22,16 @@ export class HoldReasonService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId > 0) {
-        await conditions.andWhere("A.holdReasonId = :moduleId", { moduleId });
+        await conditions.where("A.appointListId = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.removedBy = 0");
       }
 
       if (filters) {
-        const { text, orderNo, activeFlag, courtId, holdDescription, holdReasonCode, holdReason, selectCode } = filters;
+        const { text, orderNo, activeFlag, appFlag, appointListCode, appointListName, courtId } = filters;
 
         if (typeof text !== "undefined") {
-          await conditions.andWhere(`(A.holdDescription LIKE '%${text}'% OR A.holdReason LIKE '%${text}'%)`);
+          await conditions.andWhere(`(A.appointListName LIKE '%${text}'%)`);
         }
 
         if (typeof orderNo !== "undefined") {
@@ -42,24 +42,20 @@ export class HoldReasonService extends HelperService {
           await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
         }
 
+        if (typeof appFlag !== "undefined") {
+          await conditions.andWhere("A.appFlag = :appFlag", { appFlag });
+        }
+
+        if (typeof appointListCode !== "undefined") {
+          await conditions.andWhere("A.appointListCode = :appointListCode", { appointListCode });
+        }
+
+        if (typeof appointListName !== "undefined") {
+          await conditions.andWhere("A.appointListName = :appointListName", { appointListName });
+        }
+
         if (typeof courtId !== "undefined") {
           await conditions.andWhere("A.courtId = :courtId", { courtId });
-        }
-
-        if (typeof holdReasonCode !== "undefined") {
-          await conditions.andWhere("A.holdReasonCode = :holdReasonCode", { holdReasonCode });
-        }
-
-        if (typeof holdDescription !== "undefined") {
-          await conditions.andWhere("A.holdDescription = :holdDescription", { holdDescription });
-        }
-
-        if (typeof holdReason !== "undefined") {
-          await conditions.andWhere("A.holdReason = :holdReason", { holdReason });
-        }
-
-        if (typeof selectCode !== "undefined") {
-          await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
         }
       }
 
@@ -114,8 +110,7 @@ export class HoldReasonService extends HelperService {
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null) {
     try {
-      const conditions = await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A")
-        .where("A.removedBy = 0");
+      const conditions = await this.oracleLookupAppointListReposities.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters);
 
@@ -132,7 +127,7 @@ export class HoldReasonService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.holdReasonId", "DESC");
+          .orderBy("A.appointListId", "DESC");
       }
 
       const getItems = await conditions.getMany();
@@ -144,44 +139,71 @@ export class HoldReasonService extends HelperService {
     }
   }
 
-  async findORACLEOneData(filters: any = null, holdReasonId: number = 0) {
+  async findORACLEOneData(filters: any = null, moduleId: number = 0) {
     try {
-      const { text, orderNo, dateFlag, requestSubjectName, activeFlag, courtId, selectCode } = filters;
-      const conditions = await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A");
+      const conditions = await this.oracleLookupAppointListReposities.createQueryBuilder("A");
 
-      await this.oracleFilter(conditions, filters, holdReasonId);
-
-      const total = 1;
+      await this.oracleFilter(conditions, filters, moduleId);
 
       const getItems = await conditions.getOne();
       const items = await (getItems ? getItems.toResponseObject() : null);
 
-      return { items, total };
+      return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[find oracle one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find one appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
-  async findMYSQLData(filters: any = null, pages: any = null) {
-    return await this.appointDelayService.findMYSQLData(filters, pages);
-  }
+  async findMYSQLData() {
+    try {
+      const items = await getManager("mysql").query(`
+        SELECT
+          *
+        FROM (
+          SELECT
+            A.app_id appId,
+            A.app_name appName,
+            'pappoint_list' appTable
+          FROM pappoint_list A
 
-  async findMYSQLOneData(filters: any = null, moduleId: number = 0) {
-    return await this.appointDelayService.findMYSQLOneData(filters, moduleId);
-  }
+          UNION
 
+          SELECT
+            B.app_id appId,
+            B.app_name appName,
+            'pappoint_list1' appTable
+          FROM pappoint_list1 B
+
+          UNION
+
+          SELECT
+            C.app_sub_id appId,
+            C.app_sub_name appName,
+            'pappoint_sub_list' appTable
+          FROM pappoint_sub_list C
+          ) appointList
+        ORDER BY
+          appointList.appId DESC,
+          appointList.appName DESC
+      `);
+
+      return { items, total: items.length };
+    } catch (error) {
+      throw new HttpException(`[mysql: find pappoint list data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
 
 
   // POST Method
-  async createData(payloadId: number, data: OracleProceedHoldReasonDTO) {
+  async createData(payloadId: number, data: OracleLookupAppointListDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
-      const created = await this.oracleProceedHoldReasonsRepositories.create({ ...data, createdBy: payloadId, updatedBy: payloadId, removedBy: 0, createdDate, updatedDate: createdDate });
-      await this.oracleProceedHoldReasonsRepositories.save(created);
+      const created = await this.oracleLookupAppointListReposities.create({ ...data, createdBy: payloadId, updatedBy: payloadId, removedBy: 0, createdDate, updatedDate: createdDate });
+      await this.oracleLookupAppointListReposities.save(created);
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[oracle: create litigant data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -189,37 +211,36 @@ export class HoldReasonService extends HelperService {
     try {
       let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
-      const source = await this.appointDelayService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
+      const source = await this.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
 
       if (params && await source.total > 0) {
         for (let index = 0; index < source.items.length; index++) {
-          const { delayId, delayName } = source.items[index];
+          const { appId, appName, appTable } = source.items[index];
 
-          const orHoldReason = await (await this.findORACLEOneData({ holdDescription: `${delayName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+          const orHoldReason = await (await this.findORACLEOneData({ appointListName: `${appName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
           if (!orHoldReason) { // ถ้าไม่มีให้ทำงาน
             const createData = {
               activeFlag: 1,
+              appointListName: `${appName}`.trim(),
               courtId: parseInt(params.paramValue),
-              holdDescription: `${delayName}`.trim(),
-              holdReason: `${delayName}`.trim(),
             }; // เตรียมข้อมูลในการเพิ่ม
 
             const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
             if (created) {
               const logData = {
-                name: "ระบบพิจารณาคดี: เลื่อนพิจารณา",
+                name: "ระบบการนัดหมาย: เลื่อนพิจารณา",
                 serverType: `${process.env.SERVER_TYPE}`,
                 status: (created ? "SUCCESS" : "ERROR"),
                 datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
                 sourceDBType: "MYSQL",
-                sourceTableName: "pappoint_delay",
-                sourceId: delayId,
+                sourceTableName: appTable,
+                sourceId: appId,
                 sourceData: JSON.stringify(createData),
                 destinationDBType: "ORACLE",
-                destinationTableName: "PC_PROCEED_HOLD_REASON",
-                destinationId: created.holdReasonId,
+                destinationTableName: "PC_LOOKUP_APPOINT_LIST",
+                destinationId: created.appointListId,
                 destinationData: JSON.stringify(created)
               }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
@@ -231,7 +252,7 @@ export class HoldReasonService extends HelperService {
 
       return migrateLogs;
     } catch (error) {
-      throw new HttpException(`[oracle: migrate proceed hold reason failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: migrate appoint list failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 }
