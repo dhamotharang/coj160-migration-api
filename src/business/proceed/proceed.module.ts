@@ -32,8 +32,26 @@ import { LookupModule } from 'src/common/lookup/lookup.module';
     CaseModule,
     LookupModule
   ],
-  controllers: [HoldReasonController, AppointContinueController, AppointCaseJudgeController, AppointResultController, AppointController],
-  providers: [HoldReasonService, AppointContinueService, AppointCaseJudgeService, AppointService, AppointResultService],
-  exports: [HoldReasonService]
+  controllers: [
+    HoldReasonController,
+    AppointContinueController,
+    AppointCaseJudgeController,
+    AppointResultController,
+    AppointController
+  ],
+  providers: [
+    HoldReasonService,
+    AppointContinueService,
+    AppointCaseJudgeService,
+    AppointService,
+    AppointResultService
+  ],
+  exports: [
+    HoldReasonService,
+    AppointContinueService,
+    AppointCaseJudgeService,
+    AppointService,
+    AppointResultService
+  ]
 })
 export class ProceedModule { }

@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { OracleLitigantDTO } from 'src/business/litigant/dto/litigant.dto';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { OracleLitigantDTO } from '../litigant/dto/litigant.dto';
-import { MySQLCases } from './entities/mysql/case.entity';
-import { OracleCases } from './entities/oracle/case.entity';
+import { MySQLCases } from '../entities/mysql/case.entity';
+import { OracleCases } from '../entities/oracle/case.entity';
 
 @Injectable()
 export class CaseService extends HelperService {

@@ -11,13 +11,13 @@ import { AppointModule } from './appoint/appoint.module';
 @Module({
   imports: [
     LitigantModule,
+    AppointModule,
+    ProceedModule,
+    NoticeModule,
     BailCollateralModule,
     CaseModule,
     FinanceModule,
-    NoticeModule,
-    ProceedModule,
     StatModule,
-    AppointModule,
   ]
 })
 export class BusinessModule { }

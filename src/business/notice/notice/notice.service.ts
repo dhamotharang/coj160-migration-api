@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CaseAlleService } from 'src/business/case/case-alle/case-alle.service';
-import { CaseService } from 'src/business/case/case.service';
+import { CaseService } from 'src/business/case/case/case.service';
 import { LookupNoticeTypeService } from 'src/common/lookup/lookup-notice-type/lookup-notice-type.service';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';

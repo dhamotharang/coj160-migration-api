@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { OracleLitigantDTO } from './dto/litigant.dto';
+import { OracleLitigantDTO } from '../dto/litigant.dto';
 import { LitigantService } from './litigant.service';
 
 @ApiTags("Litigant")

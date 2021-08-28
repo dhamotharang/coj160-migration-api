@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { AppointmentService } from 'src/business/appoint/appointment/appointment.service';
-import { CaseService } from 'src/business/case/case.service';
 import { LookupAppointDelayService } from 'src/common/lookup/lookup-appoint-delay/lookup-appoint-delay.service';
 import { LookupAppointListService } from 'src/common/lookup/lookup-appoint-list/lookup-appoint-list.service';
 import { LookupAppointTableService } from 'src/common/lookup/lookup-appoint-table/lookup-appoint-table.service';
@@ -9,13 +9,13 @@ import { LookupJudgeService } from 'src/common/lookup/lookup-judge/lookup-judge.
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
-import { Repository } from 'typeorm';
 import { AppointCaseJudgeService } from '../appoint-case-judge/appoint-case-judge.service';
 import { AppointContinueService } from '../appoint-continue/appoint-continue.service';
 import { AppointResultService } from '../appoint-result/appoint-result.service';
 import { OracleProceedAppointDTO } from '../dto/proceed-appoint.dto';
 import { OracleProceedAppoints } from '../entities/oracle/proceed-appoint.entity';
 import { HoldReasonService } from '../hold-reason/hold-reason.service';
+import { CaseService } from 'src/business/case/case/case.service';
 
 @Injectable()
 export class AppointService extends HelperService {

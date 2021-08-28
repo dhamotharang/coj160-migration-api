@@ -2,7 +2,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { CaseService } from '../case.service';
 import { OracleCaseAlleDTO } from '../dto/case-alle.dto';
 import { OracleCaseAlles } from '../entities/oracle/case-alle.entity';
 

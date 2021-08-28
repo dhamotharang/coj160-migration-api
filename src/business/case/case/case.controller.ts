@@ -1,13 +1,13 @@
 import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { CaseAlleService } from './case-alle.service';
+import { CaseService } from './case.service';
 
-@ApiTags("Case: Alle")
-@Controller('case/alle')
-export class CaseAlleController {
+@ApiTags("Case")
+@Controller('case')
+export class CaseController {
   constructor(
-    private mainService: CaseAlleService,
+    private mainService: CaseService,
     private resdata: ResponseDataController
   ) { }
 

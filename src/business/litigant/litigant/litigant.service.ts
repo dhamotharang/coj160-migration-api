@@ -1,19 +1,19 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
+import { CaseService } from 'src/business/case/case/case.service';
 import { MySQLDepartments } from 'src/common/lookup/entities/mysql/department.entity';
+import { LookupDepartmentService } from 'src/common/lookup/lookup-department/lookup-department.service';
+import { LookupRequestTypeService } from 'src/common/lookup/lookup-request-type/lookup-request-type.service';
+import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { OfficerService } from 'src/common/person/officer/officer.service';
 import { UserProfileService } from 'src/common/person/user-profile/user-profile.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { CaseService } from '../case/case.service';
-import { OracleLitigantDTO } from './dto/litigant.dto';
-import { MySQLCaseLitigants } from './entities/mysql/case-litigant.entity';
-import { MySQLRequests } from './entities/mysql/request.entity';
-import { OracleLitigants } from './entities/oracle/litigant.entity';
-import { LookupDepartmentService } from 'src/common/lookup/lookup-department/lookup-department.service';
-import { LookupRequestTypeService } from 'src/common/lookup/lookup-request-type/lookup-request-type.service';
+import { OracleLitigantDTO } from '../dto/litigant.dto';
+import { MySQLCaseLitigants } from '../entities/mysql/case-litigant.entity';
+import { MySQLRequests } from '../entities/mysql/request.entity';
+import { OracleLitigants } from '../entities/oracle/litigant.entity';
 
 @Injectable()
 export class LitigantService extends HelperService {
@@ -445,7 +445,7 @@ export class LitigantService extends HelperService {
     }
   }
 
-  /*  
+  /*
   async createMigrationData(payloadId: number, filters: any = null) {
      try {
        const source = await this.findMYSQLData();
@@ -454,7 +454,7 @@ export class LitigantService extends HelperService {
          for (let index = 0; index < source.items.length; index++) {
            const element = source.items[index];
            const destination: any = await (await this.caseService.findORACLEOneData({ convertStringCase: `${element.subjectName}`.trim() })).items;
- 
+
            if (!destination) {
              const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
              const created = await this.createData(payloadId, {
@@ -462,7 +462,7 @@ export class LitigantService extends HelperService {
                courtId: parseInt(params.paramValue),
                activeFlag: 1,
              });
- 
+
              const logData = {
                name: "เรื่องในคำคู่ความ",
                serverType: `${process.env.SERVER_TYPE}`,
@@ -481,7 +481,7 @@ export class LitigantService extends HelperService {
            }
          }
        }
- 
+
        return migrateLogs;
      } catch (error) {
        throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)

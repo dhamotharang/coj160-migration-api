@@ -56,11 +56,11 @@ import { AuthModule } from './auth/auth.module';
       autoLoadEntities: true,
       keepConnectionAlive: true
     }),
+    AuthModule,
     HelpersModule,
     ResponseModule,
     BusinessModule,
     CommonModule,
-    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
