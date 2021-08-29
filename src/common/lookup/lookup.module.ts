@@ -42,6 +42,10 @@ import { OracleLookupRequestSubjects } from './entities/oracle/lookup-request-su
 import { MySQLRequestSubjects } from './entities/mysql/request-subject.entity';
 import { OracleLookupRequestTypes } from './entities/oracle/lookup-request-type.entity';
 import { MySQLRequestTypes } from './entities/mysql/request-type.entity';
+import { LookupSubdistrictController } from './lookup-subdistrict/lookup-subdistrict.controller';
+import { LookupSubdistrictService } from './lookup-subdistrict/lookup-subdistrict.service';
+import { OracleLookupSubdistricts } from './entities/oracle/lookup-subdistrict.entity';
+import { MySQLTambons } from './entities/mysql/tambon.entity';
 
 @Module({
   imports: [
@@ -56,7 +60,8 @@ import { MySQLRequestTypes } from './entities/mysql/request-type.entity';
       OracleLookupSendMethods,
       OracleLookupDepartments,
       OracleLookupRequestSubjects,
-      OracleLookupRequestTypes
+      OracleLookupRequestTypes,
+      OracleLookupSubdistricts
     ]),
     TypeOrmModule.forFeature([
       MySQLAppointDelays,
@@ -67,7 +72,8 @@ import { MySQLRequestTypes } from './entities/mysql/request-type.entity';
       MySQLNoticeSendTypes,
       MySQLDepartments,
       MySQLRequestSubjects,
-      MySQLRequestTypes
+      MySQLRequestTypes,
+      MySQLTambons
     ], "mysql"),
   ],
   controllers: [
@@ -81,7 +87,8 @@ import { MySQLRequestTypes } from './entities/mysql/request-type.entity';
     LookupAppointTableController,
     LookupDepartmentController,
     LookupRequestSubjectController,
-    LookupRequestTypeController
+    LookupRequestTypeController,
+    LookupSubdistrictController
   ],
   providers: [
     LookupNoticeTypeService,
@@ -94,7 +101,8 @@ import { MySQLRequestTypes } from './entities/mysql/request-type.entity';
     LookupAppointListService,
     LookupDepartmentService,
     LookupRequestSubjectService,
-    LookupRequestTypeService
+    LookupRequestTypeService,
+    LookupSubdistrictService
   ],
   exports: [
     LookupNoticeTypeService,

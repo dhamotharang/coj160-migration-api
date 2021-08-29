@@ -6,6 +6,9 @@ import { MySQLNotices } from './entities/mysql/notice.entity';
 import { OracleNotices } from './entities/oracle/notice.entity';
 import { NoticeController } from './notice/notice.controller';
 import { NoticeService } from './notice/notice.service';
+import { NoticeSendController } from './notice-send/notice-send.controller';
+import { NoticeSendService } from './notice-send/notice-send.service';
+import { MySQLNoticeSends } from './entities/mysql/notice-send.entity';
 
 @Module({
   imports: [
@@ -13,12 +16,13 @@ import { NoticeService } from './notice/notice.service';
       OracleNotices
     ]),
     TypeOrmModule.forFeature([
-      MySQLNotices
+      MySQLNotices,
+      MySQLNoticeSends
     ], "mysql"),
     CaseModule,
     LookupModule,
   ],
-  controllers: [NoticeController],
-  providers: [NoticeService]
+  controllers: [NoticeController, NoticeSendController],
+  providers: [NoticeService, NoticeSendService]
 })
 export class NoticeModule { }

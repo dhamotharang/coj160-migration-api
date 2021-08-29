@@ -1,5 +1,6 @@
 import { HelperService } from "src/shared/helpers/helper.service";
-import { Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { MySQLNoticeSends } from "./notice-send.entity";
 
 @Entity({ name: "pnotice" })
 export class MySQLNotices extends HelperService {
@@ -205,6 +206,9 @@ export class MySQLNotices extends HelperService {
   @CreateDateColumn({ name: "create_date", type: "datetime", comment: "วันที่เวลาสร้าง record" }) createDate: Date;
   @UpdateDateColumn({ name: "update_date", type: "datetime", comment: "วันที่ เวลา update record" }) updateDate: Date;
 
+  @OneToMany(type => MySQLNoticeSends, send => send.noticeRunning)
+  @JoinColumn({ name: "notice_running" }) noticeSends: MySQLNoticeSends;
+
   toResponseObject() {
     const {
       noticeRunning, courtRunning, noticeCourtRunning, noticeTypeId, noticeTypeName, noticeNo, noticeYy, dataType, noticeGroup, noticeGroupYy, noticeBarcode,
@@ -225,7 +229,7 @@ export class MySQLNotices extends HelperService {
       catchJudgeId, catchJudgeName, judgeTelNo, catchReportDate, catchResult, catchDate, catchRemark, catchChk1, catchChk2,
       catchChk21, catchChk22, catchChk23, catchChk3, catchChk3Remark, noticeRemark, actionIn, remarkTr, refId, refNoticeNo,
       withdrawDate, payuserId, createDepCode, createUserId, createUser, createDate, updateDepCode, updateUserId, updateUser,
-      updateDate, oldNoticeNo, oldNoticeYy, refId1, refId2, refRecgen, refNo, refOutRecGen,
+      updateDate, oldNoticeNo, oldNoticeYy, refId1, refId2, refRecgen, refNo, refOutRecGen, noticeSends
     } = this;
 
     const responseObject = {
@@ -248,6 +252,7 @@ export class MySQLNotices extends HelperService {
       catchChk21, catchChk22, catchChk23, catchChk3, catchChk3Remark, noticeRemark, actionIn, remarkTr, refId, refNoticeNo,
       withdrawDate, payuserId, createDepCode, createUserId, createUser, updateDepCode, updateUserId, updateUser,
       oldNoticeNo, oldNoticeYy, refId1, refId2, refRecgen, refNo, refOutRecGen,
+      noticeSends: noticeSends ? noticeSends.toResponseObject() : null,
       createDate: createDate ? this.dateFormat("YYYY-MM-DD", createDate) : null,
       updateDate: updateDate ? this.dateFormat("YYYY-MM-DD", updateDate) : null,
     };
