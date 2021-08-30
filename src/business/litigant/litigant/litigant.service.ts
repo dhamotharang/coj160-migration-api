@@ -41,7 +41,7 @@ export class LitigantService extends HelperService {
 
       if (filters) {
         const { text, dateFlag, activeFlag, orderNo, courtId, selectCode } = filters;
-        if (typeof text !== "undefined") {
+        if (typeof text !== "undefined" && text !== "") {
           await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%' OR A.courtOrderDetail LIKE '%${text}%')`)
         }
 
@@ -80,6 +80,7 @@ export class LitigantService extends HelperService {
       const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
         .leftJoinAndSelect("A.cases", "B")
+        .leftJoinAndSelect("A.courts", "C")
         .where("A.removedBy = 0");
 
       await this.oracleFilter(conditions, filters);

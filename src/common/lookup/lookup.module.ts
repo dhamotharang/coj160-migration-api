@@ -46,6 +46,8 @@ import { LookupSubdistrictController } from './lookup-subdistrict/lookup-subdist
 import { LookupSubdistrictService } from './lookup-subdistrict/lookup-subdistrict.service';
 import { OracleLookupSubdistricts } from './entities/oracle/lookup-subdistrict.entity';
 import { MySQLTambons } from './entities/mysql/tambon.entity';
+import { LookupCourtController } from './lookup-court/lookup-court.controller';
+import { LookupCourtService } from './lookup-court/lookup-court.service';
 
 @Module({
   imports: [
@@ -88,7 +90,8 @@ import { MySQLTambons } from './entities/mysql/tambon.entity';
     LookupDepartmentController,
     LookupRequestSubjectController,
     LookupRequestTypeController,
-    LookupSubdistrictController
+    LookupSubdistrictController,
+    LookupCourtController,
   ],
   providers: [
     LookupNoticeTypeService,
@@ -102,7 +105,8 @@ import { MySQLTambons } from './entities/mysql/tambon.entity';
     LookupDepartmentService,
     LookupRequestSubjectService,
     LookupRequestTypeService,
-    LookupSubdistrictService
+    LookupSubdistrictService,
+    LookupCourtService
   ],
   exports: [
     LookupNoticeTypeService,

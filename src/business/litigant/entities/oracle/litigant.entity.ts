@@ -1,5 +1,6 @@
 import { Logger, HttpException, HttpStatus } from "@nestjs/common";
 import { OracleCases } from "src/business/case/entities/oracle/case.entity";
+import { OracleLookupCourts } from "src/common/lookup/entities/oracle/lookup-court.entity";
 import { HelperService } from "src/shared/helpers/helper.service";
 import { BeforeInsert, Column, CreateDateColumn, DeleteDateColumn, Entity, getManager, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -66,8 +67,17 @@ export class OracleLitigants extends HelperService {
   @ManyToOne(type => OracleCases, cases => cases.caseId)
   @JoinColumn({ name: "CASE_ID" }) cases: OracleCases;
 
+  @ManyToOne(type => OracleLookupCourts, court => court.courtId)
+  @JoinColumn({ name: "COURT_ID" }) courts: OracleLookupCourts;
+
   toResponseObject(showAll: boolean = false) {
-    const { litigantId, courtId, caseId, orderNo, reqNo, reqNoYear, refNo, refNoYear, litigantTypeId, litigantSubTypeCode, reqDescription, reqDate, reqReceivedBy, reqName, submitReqBy, submitDate, courtOrderDetail, courtOrderDate, judgeId, sendOrderDate, sendOrderDept, sendOrderDescription, notes, propose, proposeDate, proposeName, proposeDepartment, acceptRequest, acceptRequestDate, acceptRequestName, acceptRequestDepartment, courtOrderRecordDate, courtOrderRecordName, courtOrderRecordDepartment, printById, reqOrderId, litigantSubTypeName, createdBy, createdDate, updatedBy, updatedDate, removedBy, removedDate, cases } = this;
+    const {
+      litigantId, courtId, caseId, orderNo, reqNo, reqNoYear, refNo, refNoYear, litigantTypeId, litigantSubTypeCode, reqDescription,
+      reqDate, reqReceivedBy, reqName, submitReqBy, submitDate, courtOrderDetail, courtOrderDate, judgeId, sendOrderDate, sendOrderDept,
+      sendOrderDescription, notes, propose, proposeDate, proposeName, proposeDepartment, acceptRequest, acceptRequestDate, acceptRequestName,
+      acceptRequestDepartment, courtOrderRecordDate, courtOrderRecordName, courtOrderRecordDepartment, printById, reqOrderId,
+      litigantSubTypeName, createdBy, createdDate, updatedBy, updatedDate, removedBy, removedDate, cases, courts
+    } = this;
     const responseObject = {
       litigantId, courtId, caseId, orderNo, reqNo, reqNoYear, refNo, refNoYear, litigantTypeId, litigantSubTypeCode, reqDescription,
       reqDate: this.dateFormat("YYYY-MM-DD", reqDate), reqReceivedBy,
@@ -88,7 +98,8 @@ export class OracleLitigants extends HelperService {
 
     if (showAll) {
       Object.assign(responseObject, {
-        cases: cases.toResponseObject()
+        cases: cases.toResponseObject(),
+        courts: courts.toResponseObject()
       });
     }
 
