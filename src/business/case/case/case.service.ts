@@ -22,6 +22,10 @@ export class CaseService extends HelperService {
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
         .where("A.removedBy = 0");
 
+      if (typeof text !== "undefined" && text !== "") {
+        await conditions.andWhere(`(A.accuDesc LIKE '%${text}%' OR A.alleDesc LIKE '%${text}%' OR A.prosDesc LIKE '%${text}%' OR A.barcode LIKE '%${text}%')`);
+      }
+
       if (typeof orderNo !== "undefined") {
         await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
       }

@@ -35,12 +35,13 @@ export class LitigantService extends HelperService {
   // Filter zone
   async oracleFilter(conditions, filters, moduleId: number = null) {
     try {
+      Logger.log(filters, "filters");
       if (moduleId) {
         await conditions.andWhere("A.litigantId = :moduleId", { moduleId });
       }
 
       if (filters) {
-        const { text, dateFlag, activeFlag, orderNo, courtId, selectCode } = filters;
+        const { text, dateFlag, activeFlag, orderNo, courtId, selectCode, reqNo, reqNoYear, litigantTypeId, litigantSubTypeCode } = filters;
         if (typeof text !== "undefined" && text !== "") {
           await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%' OR A.courtOrderDetail LIKE '%${text}%')`)
         }
@@ -63,6 +64,22 @@ export class LitigantService extends HelperService {
 
         if (typeof selectCode !== "undefined") {
           await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
+        }
+
+        if (typeof reqNo !== "undefined") {
+          await conditions.andWhere("A.reqNo = :reqNo", { reqNo });
+        }
+
+        if (typeof reqNoYear !== "undefined") {
+          await conditions.andWhere("A.reqNoYear = :reqNoYear", { reqNoYear });
+        }
+
+        if (typeof litigantTypeId !== "undefined") {
+          await conditions.andWhere("A.litigantTypeId = :litigantTypeId", { litigantTypeId });
+        }
+
+        if (typeof litigantSubTypeCode !== "undefined") {
+          await conditions.andWhere("A.litigantSubTypeCode = :litigantSubTypeCode", { litigantSubTypeCode });
         }
       }
 

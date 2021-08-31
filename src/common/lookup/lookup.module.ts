@@ -48,6 +48,7 @@ import { OracleLookupSubdistricts } from './entities/oracle/lookup-subdistrict.e
 import { MySQLTambons } from './entities/mysql/tambon.entity';
 import { LookupCourtController } from './lookup-court/lookup-court.controller';
 import { LookupCourtService } from './lookup-court/lookup-court.service';
+import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
 
 @Module({
   imports: [
@@ -63,7 +64,8 @@ import { LookupCourtService } from './lookup-court/lookup-court.service';
       OracleLookupDepartments,
       OracleLookupRequestSubjects,
       OracleLookupRequestTypes,
-      OracleLookupSubdistricts
+      OracleLookupSubdistricts,
+      OracleLookupCourts
     ]),
     TypeOrmModule.forFeature([
       MySQLAppointDelays,

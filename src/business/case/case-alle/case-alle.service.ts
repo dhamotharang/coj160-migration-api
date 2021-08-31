@@ -75,7 +75,7 @@ export class CaseAlleService extends HelperService {
           await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
         } else {
           await conditions
-            .orderBy("A.noticeRunning", "DESC");
+            .orderBy("A.caseAlleId", "DESC");
         }
       }
 
