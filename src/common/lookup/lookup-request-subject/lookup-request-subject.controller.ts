@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Logger, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { OracleLookupRequestSubjectDTO } from 'src/common/lookup/dto/lookup-request-subject.dto';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
@@ -27,6 +27,23 @@ export class LookupRequestSubjectController {
 
     const resdata = await this.mainService[`find${dbtype}Data`](query, null);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+  }
+
+  @Get(':start/:limit/pages')
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Pages" })
+  @ApiParam({ name: "limit" })
+  @ApiParam({ name: "start" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
+  async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
+    let dbtype = "ORACLE";
+    if (typeof query.dbtype !== "undefined") {
+      dbtype = query.dbtype.toUpperCase();
+    }
+
+    const { start, limit } = param;
+
+    const resdata = await this.mainService[`find${dbtype}Data`](query, { start, limit });
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
   }
 
 

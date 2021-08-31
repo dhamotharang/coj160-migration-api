@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
-import { BeforeInsert, Column, Entity, getManager, PrimaryColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, Entity, getManager, PrimaryColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: "PC_LOOKUP_APPOINT_LIST" })
 export class OracleLookupAppointLists extends HelperService {
@@ -9,13 +9,7 @@ export class OracleLookupAppointLists extends HelperService {
   }
 
   @PrimaryColumn({ name: "APPOINT_LIST_ID" }) appointListId: number;
-  @Column({ name: "CREATED_BY", default: 0 }) createdBy: number;
-  @Column({ name: "CREATED_DATE" }) createdDate: Date;
   @Column({ name: "ORDER_NO", nullable: true, default: 0.0 }) orderNo: number;
-  @Column({ name: "REMOVED_BY", default: 0 }) removedBy: number;
-  @Column({ name: "REMOVED_DATE", nullable: true }) removedDate: Date;
-  @Column({ name: "UPDATED_BY", default: 0 }) updatedBy: number;
-  @Column({ name: "UPDATED_DATE", nullable: true }) updatedDate: Date;
   @Column({ name: "ACTIVE_FLAG", nullable: true }) activeFlag: number;
   @Column({ name: "APP_FLAG", nullable: true }) appFlag: number;
   @Column({ name: "APPOINT_LIST_CODE", nullable: true }) appointListCode: string;
@@ -26,6 +20,12 @@ export class OracleLookupAppointLists extends HelperService {
   @Column({ name: "SELECT_CODE", nullable: true }) selectCode: string;
   @Column({ name: "TEMP_OWN", nullable: true }) tempOwn: number;
   @Column({ name: "UD_FLAG", nullable: true }) udFlag: number;
+  @Column({ name: "CREATED_BY", default: 0 }) createdBy: number;
+  @Column({ name: "UPDATED_BY", default: 0 }) updatedBy: number;
+  @Column({ name: "REMOVED_BY", default: 0 }) removedBy: number;
+  @CreateDateColumn({ name: "CREATED_DATE", type: "timestamp" }) createdDate: Date;
+  @UpdateDateColumn({ name: "UPDATED_DATE", type: "timestamp", nullable: true }) updatedDate: Date;
+  @Column({ name: "REMOVED_DATE", type: "timestamp", nullable: true }) removedDate: Date;
 
   @BeforeInsert()
   async beforeInsert() {
