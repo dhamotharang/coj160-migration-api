@@ -51,7 +51,7 @@ import { AuthModule } from './auth/auth.module';
           ca: process.env.PG_SSL_CERT,
         },
       },
-      synchronize: true,
+      synchronize: process.env.SERVER_TYPE === 'PROD' ? false : true,
       logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
       autoLoadEntities: true,
       keepConnectionAlive: true

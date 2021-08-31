@@ -38,23 +38,19 @@ export class NoticeService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId > 0) {
-        await conditions.where("A.noticeRunning = :moduleId", { moduleId });
+        await conditions.where("A.noticeId = :moduleId", { moduleId });
       } else {
         await conditions.where("A.removedBy = 0");
       }
 
       if (filters) {
-        const { text, noticeRunning, orderNo, allegationId, alley, appointListCode, appointListName, cancelReason, cancelStatus, caseId, courtId, courtType } = filters;
+        const { text, orderNo, allegationId, alley, appointListCode, appointListName, cancelReason, cancelStatus, caseId, courtId, courtType } = filters;
         if (typeof text !== "undefined") {
-          await conditions.andWhere(`(A.address LIKE '%${text}%' OR A.addressNearLocation LIKE '%${text}%' OR A.addressPlace LIKE '%${text}%' OR A.allegationDetail LIKE '%${text}%' OR OR A.appointListName LIKE '%${text}%')`)
+          await conditions.andWhere(`(A.address LIKE '%${text}%' OR A.addressNearLocation LIKE '%${text}%' OR A.addressPlace LIKE '%${text}%')`)
         }
 
         if (typeof orderNo !== "undefined") {
           await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-        }
-
-        if (typeof noticeRunning !== "undefined") {
-          await conditions.andWhere("A.noticeRunning = :noticeRunning", { noticeRunning });
         }
 
         if (typeof allegationId !== "undefined") {
@@ -215,7 +211,7 @@ export class NoticeService extends HelperService {
           await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
         } else {
           await conditions
-            .orderBy("A.noticeRunning", "DESC");
+            .orderBy("A.noticeId", "DESC");
         }
       }
 

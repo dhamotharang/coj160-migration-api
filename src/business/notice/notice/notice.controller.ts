@@ -33,7 +33,7 @@ export class NoticeController {
   @ApiQuery({ name: "timeStart", required: false })
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
-  @ApiQuery({ name: "dbtype", enum: ["mysql"] })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {
