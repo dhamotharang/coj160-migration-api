@@ -30,6 +30,7 @@ import { ReceiptBalanceHistoryController } from './receipt-balance-history/recei
 import { OracleFinPayments } from './entities/oracle/fin-payment.entity';
 import { MySQLReturnReceipts } from './entities/mysql/return-receipt.entity';
 import { OracleFinPaymentDetails } from './entities/oracle/fin-payment-detail.entity';
+import { OracleFinReceiptBalanceHistories } from './entities/oracle/fin-receipt-balance-history.entity';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { OracleFinPaymentDetails } from './entities/oracle/fin-payment-detail.en
       OracleFinReceiptCredits,
       OracleFinReceiptCancels,
       OracleFinPayments,
-      OracleFinPaymentDetails
+      OracleFinPaymentDetails,
+      OracleFinReceiptBalanceHistories
     ]),
     TypeOrmModule.forFeature([
       MySQLReceipts,

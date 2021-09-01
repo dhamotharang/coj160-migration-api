@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { OracleFinReceiptDTO } from '../dto/fin-receipt.dto';
 import { MySQLReceipts } from '../entities/mysql/receipt.entity';
 import { OracleFinReceipts } from '../entities/oracle/fin-receipt.entity';
+import { ReceiptBalanceHistoryService } from '../receipt-balance-history/receipt-balance-history.service';
 import { ReceiptCancelService } from '../receipt-cancel/receipt-cancel.service';
 import { ReceiptChequeService } from '../receipt-cheque/receipt-cheque.service';
 import { ReceiptCrditService } from '../receipt-crdit/receipt-crdit.service';
@@ -44,7 +45,8 @@ export class FinReceiptService extends HelperService {
     private receiptCrditService: ReceiptCrditService,
     private receiptCancelService: ReceiptCancelService,
     private receiptPaymentService: ReceiptPaymentService,
-    private receiptPaymentDetailService: ReceiptPaymentDetailService
+    private receiptPaymentDetailService: ReceiptPaymentDetailService,
+    private receiptBalanceHistoryService: ReceiptBalanceHistoryService,
   ) {
     super();
   }
@@ -254,6 +256,7 @@ export class FinReceiptService extends HelperService {
           ...element.toResponseObject(),
           bankName: banks ? banks.bankName : null,
           banks: banks ? banks.toResponseObject() : null,
+          payments,
           paymentRunId: payments ? payments.runId : null,
           paymentCreateUser: payments ? payments.createUser : null,
           paymentCreateDate: payments ? payments.createDate : null,
@@ -307,7 +310,7 @@ export class FinReceiptService extends HelperService {
     }
   }
 
-  /* async createMigrationData(payloadId: number, filters: any = null) {
+  async createMigrationData(payloadId: number, filters: any = null) {
     try {
       let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
@@ -630,12 +633,14 @@ export class FinReceiptService extends HelperService {
                 const userProfiles3 = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${paymentCreateUser}`.trim() })).items;
 
                 const receiptBalanceData = {
-                  paidAmount
+                  paidAmount: paymentPayAmt,
+                  paymentDetailId: createPaymentDetail.detailId,
+                  receiptDetailId: createdDetail.detailId
                 };
-                const receiptBalance = await this.receiptPaymentDetailService.createData(payloadId, receiptBalanceData); // เพิ่มข้อมูล
+                const receiptBalance = await this.receiptBalanceHistoryService.createData(payloadId, receiptBalanceData); // เพิ่มข้อมูล
 
                 if (receiptBalance) {
-                  const migrateLog5 = {
+                  const migrateLog6 = {
                     name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
                     serverType: `${process.env.SERVER_TYPE}`,
                     status: (receiptBalance ? "SUCCESS" : "ERROR"),
@@ -646,11 +651,11 @@ export class FinReceiptService extends HelperService {
                     sourceData: JSON.stringify(receiptBalanceData),
                     destinationDBType: "ORACLE",
                     destinationTableName: "PC_FIN_RECEIPT_BALANCE_HISTORY",
-                    destinationId: receiptBalance.paymentId,
+                    destinationId: receiptBalance.finReceiptBalanceHistoryId,
                     destinationData: JSON.stringify(receiptBalance)
                   }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
-                  await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog5)); // เพิ่ม Log การ Migrate ข้อมูล
+                  await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog6)); // เพิ่ม Log การ Migrate ข้อมูล
                 }
               }
             } else {
@@ -672,5 +677,5 @@ export class FinReceiptService extends HelperService {
     } catch (error) {
       throw new HttpException(`[Migrate receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }
-  } */
+  }
 }
