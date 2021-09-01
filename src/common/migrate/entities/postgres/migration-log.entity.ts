@@ -9,7 +9,7 @@ export class PostgresMigrationLogs extends HelperService {
   @Column({ name: "code" }) code: string;
   @Column({ name: "name" }) name: string;
   @Column({ name: "server_type", enum: ["PROD", "UAT"] }) serverType: string;
-  @Column({ name: "status", enum: ["SUCCESS", "ERROR", "DUPLICATE"] }) status: string;
+  @Column({ name: "status", enum: ["SUCCESS", "ERROR", "DUPLICATE", "MATCH"] }) status: string;
   @Column({ name: "datetime" }) datetime: Date;
   @Column({ name: "source_dbtype", enum: ["ORACLE", "MYSQL", "POSTGRES"] }) sourceDBType: string;
   @Column({ name: "source_table_name" }) sourceTableName: string;

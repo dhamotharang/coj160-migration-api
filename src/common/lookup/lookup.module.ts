@@ -49,6 +49,18 @@ import { MySQLTambons } from './entities/mysql/tambon.entity';
 import { LookupCourtController } from './lookup-court/lookup-court.controller';
 import { LookupCourtService } from './lookup-court/lookup-court.service';
 import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
+import { LookupReceiptSubTypeController } from './lookup-receipt-sub-type/lookup-receipt-sub-type.controller';
+import { LookupReceiptTypeController } from './lookup-receipt-type/lookup-receipt-type.controller';
+import { LookupReceiptSubTypeService } from './lookup-receipt-sub-type/lookup-receipt-sub-type.service';
+import { LookupReceiptTypeService } from './lookup-receipt-type/lookup-receipt-type.service';
+import { OracleLookupReceiptTypes } from './entities/oracle/lookup-receipt-type.entity';
+import { OracleLookupReceiptSubTypes } from './entities/oracle/lookup-receipt-sub-type.entity';
+import { MySQLReceiptTypes } from './entities/mysql/receipt-type.entity';
+import { MySQLReceiptSubTypes } from './entities/mysql/receipt-sub-type.entity';
+import { LookupBankService } from './lookup-bank/lookup-bank.service';
+import { LookupBankController } from './lookup-bank/lookup-bank.controller';
+import { OracleLookupBanks } from './entities/oracle/lookup-bank.entity';
+import { MySQLBanks } from './entities/mysql/bank.entity';
 
 @Module({
   imports: [
@@ -65,7 +77,10 @@ import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
       OracleLookupRequestSubjects,
       OracleLookupRequestTypes,
       OracleLookupSubdistricts,
-      OracleLookupCourts
+      OracleLookupCourts,
+      OracleLookupReceiptTypes,
+      OracleLookupReceiptSubTypes,
+      OracleLookupBanks
     ]),
     TypeOrmModule.forFeature([
       MySQLAppointDelays,
@@ -77,7 +92,10 @@ import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
       MySQLDepartments,
       MySQLRequestSubjects,
       MySQLRequestTypes,
-      MySQLTambons
+      MySQLTambons,
+      MySQLReceiptTypes,
+      MySQLReceiptSubTypes,
+      MySQLBanks
     ], "mysql"),
   ],
   controllers: [
@@ -94,6 +112,9 @@ import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
     LookupRequestTypeController,
     LookupSubdistrictController,
     LookupCourtController,
+    LookupReceiptSubTypeController,
+    LookupReceiptTypeController,
+    LookupBankController,
   ],
   providers: [
     LookupNoticeTypeService,
@@ -108,7 +129,10 @@ import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
     LookupRequestSubjectService,
     LookupRequestTypeService,
     LookupSubdistrictService,
-    LookupCourtService
+    LookupCourtService,
+    LookupReceiptSubTypeService,
+    LookupReceiptTypeService,
+    LookupBankService
   ],
   exports: [
     LookupNoticeTypeService,
@@ -121,7 +145,12 @@ import { OracleLookupCourts } from './entities/oracle/lookup-court.entity';
     LookupAppointListService,
     LookupDepartmentService,
     LookupRequestSubjectService,
-    LookupRequestTypeService
+    LookupRequestTypeService,
+    LookupSubdistrictService,
+    LookupCourtService,
+    LookupReceiptSubTypeService,
+    LookupReceiptTypeService,
+    LookupBankService
   ]
 })
 export class LookupModule { }

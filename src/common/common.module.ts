@@ -11,6 +11,7 @@ import { LookupModule } from './lookup/lookup.module';
     PersonModule,
     LookupModule
   ],
-  controllers: []
+  controllers: [],
+  providers: []
 })
 export class CommonModule { }
