@@ -2,13 +2,13 @@ import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/comm
 import { ApiTags, ApiQuery, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { ReceiptPaymentService } from './receipt-payment.service';
+import { PaymentService } from './payment.service';
 
-@ApiTags("Finance: Receipt payment")
-@Controller('receiptPayment')
-export class ReceiptPaymentController {
+@ApiTags("Finance: payment")
+@Controller('finance/payment')
+export class PaymentController {
   constructor(
-    private mainService: ReceiptPaymentService,
+    private mainService: PaymentService,
     private resdata: ResponseDataController,
   ) { }
 

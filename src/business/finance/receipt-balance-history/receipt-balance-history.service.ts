@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
 import { OracleFinReceiptBalanceHistorieDTO } from '../dto/fin-receipt-balance-history.dto';
-import { OracleFinReceiptCancelDTO } from '../dto/fin-receipt-cancel.dto';
 import { OracleFinReceiptBalanceHistories } from '../entities/oracle/fin-receipt-balance-history.entity';
 
 @Injectable()
@@ -19,7 +18,7 @@ export class ReceiptBalanceHistoryService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId !== 0) {
-        await conditions.where("A.detailId = :moduleId", { moduleId });
+        await conditions.where("A.receiptBalanceHistoryId = :moduleId", { moduleId });
       } else {
         await conditions.where("A.removedBy = 0");
       }
@@ -97,7 +96,7 @@ export class ReceiptBalanceHistoryService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.detailId", "DESC");
+          .orderBy("A.receiptBalanceHistoryId", "DESC");
       }
 
       const getItems = await conditions.getMany();

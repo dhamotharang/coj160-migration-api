@@ -2,15 +2,17 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { OracleFinPaymentDetailDTO } from '../dto/fin-payment-detail.dto';
+import { OracleFinPaymentDTO } from '../dto/fin-payment.dto';
+import { OracleFinReceiptDetailDTO } from '../dto/fin-receipt-detail.dto';
+import { MySQLReceiptDetails } from '../entities/mysql/receipt-detail.entity';
 import { MySQLReturnReceipts } from '../entities/mysql/return-receipt.entity';
-import { OracleFinPaymentDetails } from '../entities/oracle/fin-payment-detail.entity';
+import { OracleFinPayments } from '../entities/oracle/fin-payment.entity';
 
 @Injectable()
-export class ReceiptPaymentDetailService extends HelperService {
+export class PaymentService extends HelperService {
   constructor(
-    @InjectRepository(OracleFinPaymentDetails)
-    private readonly oracleFinPaymentRepositories: Repository<OracleFinPaymentDetails>,
+    @InjectRepository(OracleFinPayments)
+    private readonly oracleFinPaymentRepositories: Repository<OracleFinPayments>,
     @InjectRepository(MySQLReturnReceipts, "mysql")
     private readonly mysqlReceiptRepositories: Repository<MySQLReturnReceipts>,
   ) {
@@ -21,7 +23,7 @@ export class ReceiptPaymentDetailService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId !== 0) {
-        await conditions.where("A.detailId = :moduleId", { moduleId });
+        await conditions.where("A.paymentId = :moduleId", { moduleId });
       } else {
         await conditions.where("A.removedBy = 0");
       }
@@ -157,7 +159,7 @@ export class ReceiptPaymentDetailService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.detailId", "DESC");
+          .orderBy("A.paymentId", "DESC");
       }
 
       const getItems = await conditions.getMany();
@@ -234,7 +236,7 @@ export class ReceiptPaymentDetailService extends HelperService {
 
 
   // POST Method
-  async createData(payloadId: number, data: OracleFinPaymentDetailDTO) {
+  async createData(payloadId: number, data: OracleFinPaymentDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
       const created = await this.oracleFinPaymentRepositories.create({

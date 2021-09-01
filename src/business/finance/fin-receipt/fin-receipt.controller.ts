@@ -6,7 +6,7 @@ import { OracleFinReceiptDTO } from '../dto/fin-receipt.dto';
 import { FinReceiptService } from './fin-receipt.service';
 
 @ApiTags("Finance: Receipt")
-@Controller('financeReceipt')
+@Controller('finance/receipt')
 export class FinReceiptController {
   constructor(
     private mainService: FinReceiptService,

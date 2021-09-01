@@ -10,9 +10,9 @@ export class OracleFinPayments {
   @Column({ name: "REF_CODE_YEAR", nullable: true, comment: "ปีอ้างอิง" }) refCodeYear: string;
   @Column({ name: "TOTAL_AMOUNT", nullable: true, type: "float", comment: "จำนวนเงินทั้งหมด" }) totalAmount: number;
   @Column({ name: "PAYMENT_DATE", comment: "วันที่สั่งจ่ายเงิน" }) paymentDate: Date;
-  @Column({ name: "IS_CANCEL_PAYMENT", nullable: true, comment: "ตัวเลือกยกเลิกใบสั่งจ่ายเงิน" }) isCancelPayment: number;
-  @Column({ name: "ACCOUNT_NO", comment: "หมายเลขบัญชีกระแสรายวัน" }) accountNo: string;
-  @Column({ name: "SERVICE_CODE", comment: "รหัส Service Code" }) serviceCode: string;
+  // @Column({ name: "IS_CANCEL_PAYMENT", nullable: true, comment: "ตัวเลือกยกเลิกใบสั่งจ่ายเงิน" }) isCancelPayment: number;
+  // @Column({ name: "ACCOUNT_NO", comment: "หมายเลขบัญชีกระแสรายวัน" }) accountNo: string;
+  // @Column({ name: "SERVICE_CODE", comment: "รหัส Service Code" }) serviceCode: string;
   @Column({ name: "CREATED_BY", comment: "รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
   @Column({ name: "UPDATED_BY", nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
   @Column({ name: "REMOVED_BY", comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
@@ -21,8 +21,8 @@ export class OracleFinPayments {
   @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
 
   toResponseObject() {
-    const { paymentId, courtId, orderNo, judgeId, refCodeNo, refCodeYear, totalAmount, paymentDate, isCancelPayment, accountNo, serviceCode, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
-    const responseObject = { paymentId, courtId, orderNo, judgeId, refCodeNo, refCodeYear, totalAmount, paymentDate, isCancelPayment, accountNo, serviceCode, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
+    const { paymentId, courtId, orderNo, judgeId, refCodeNo, refCodeYear, totalAmount, paymentDate, /* isCancelPayment,accountNo, serviceCode,  */createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
+    const responseObject = { paymentId, courtId, orderNo, judgeId, refCodeNo, refCodeYear, totalAmount, paymentDate, /* isCancelPayment,accountNo, serviceCode,  */createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate };
     return responseObject;
   }
 }

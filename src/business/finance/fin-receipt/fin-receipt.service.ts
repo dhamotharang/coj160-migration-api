@@ -17,10 +17,10 @@ import { OracleFinReceipts } from '../entities/oracle/fin-receipt.entity';
 import { ReceiptBalanceHistoryService } from '../receipt-balance-history/receipt-balance-history.service';
 import { ReceiptCancelService } from '../receipt-cancel/receipt-cancel.service';
 import { ReceiptChequeService } from '../receipt-cheque/receipt-cheque.service';
-import { ReceiptCrditService } from '../receipt-crdit/receipt-crdit.service';
+import { ReceiptCrditService } from '../receipt-credit/receipt-credit.service';
 import { ReceiptDetailService } from '../receipt-detail/receipt-detail.service';
-import { ReceiptPaymentDetailService } from '../receipt-payment-detail/receipt-payment-detail.service';
-import { ReceiptPaymentService } from '../receipt-payment/receipt-payment.service';
+import { PaymentDetailService } from '../payment-detail/payment-detail.service';
+import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class FinReceiptService extends HelperService {
@@ -44,8 +44,8 @@ export class FinReceiptService extends HelperService {
     private receiptChequeService: ReceiptChequeService,
     private receiptCrditService: ReceiptCrditService,
     private receiptCancelService: ReceiptCancelService,
-    private receiptPaymentService: ReceiptPaymentService,
-    private receiptPaymentDetailService: ReceiptPaymentDetailService,
+    private paymentService: PaymentService,
+    private receiptPaymentDetailService: PaymentDetailService,
     private receiptBalanceHistoryService: ReceiptBalanceHistoryService,
   ) {
     super();
@@ -251,7 +251,7 @@ export class FinReceiptService extends HelperService {
       const getItems = await conditions.getMany();
       const items = await Promise.all(await getItems.map(async element => {
         const banks = await this.mysqlBankRepositories.findOne({ bankId: element.bankId });
-        const payments = await (await this.receiptPaymentService.findMYSQLOneData({ runId: element.receiptRunning })).items;
+        const payments = await (await this.paymentService.findMYSQLOneData({ runId: element.receiptRunning })).items;
         return {
           ...element.toResponseObject(),
           bankName: banks ? banks.bankName : null,
@@ -568,7 +568,7 @@ export class FinReceiptService extends HelperService {
                   remark,
                   totalAmount: paymentPayAmt
                 };
-                const createPayment = await this.receiptPaymentService.createData(payloadId, createPaymentData); // เพิ่มข้อมูล
+                const createPayment = await this.paymentService.createData(payloadId, createPaymentData); // เพิ่มข้อมูล
 
                 if (createPayment) {
                   const migrateLog5 = {
@@ -634,7 +634,7 @@ export class FinReceiptService extends HelperService {
 
                 const receiptBalanceData = {
                   paidAmount: paymentPayAmt,
-                  paymentDetailId: createPaymentDetail.detailId,
+                  paymentDetailId: createPaymentDetail.paymentDetailId,
                   receiptDetailId: createdDetail.detailId
                 };
                 const receiptBalance = await this.receiptBalanceHistoryService.createData(payloadId, receiptBalanceData); // เพิ่มข้อมูล
@@ -651,7 +651,7 @@ export class FinReceiptService extends HelperService {
                     sourceData: JSON.stringify(receiptBalanceData),
                     destinationDBType: "ORACLE",
                     destinationTableName: "PC_FIN_RECEIPT_BALANCE_HISTORY",
-                    destinationId: receiptBalance.finReceiptBalanceHistoryId,
+                    destinationId: receiptBalance.receiptBalanceHistoryId,
                     destinationData: JSON.stringify(receiptBalance)
                   }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 

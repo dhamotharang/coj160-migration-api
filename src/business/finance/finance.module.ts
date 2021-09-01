@@ -14,17 +14,17 @@ import { ReceiptDetailController } from './receipt-detail/receipt-detail.control
 import { ReceiptDetailService } from './receipt-detail/receipt-detail.service';
 import { ReceiptChequeService } from './receipt-cheque/receipt-cheque.service';
 import { ReceiptChequeController } from './receipt-cheque/receipt-cheque.controller';
-import { ReceiptCrditController } from './receipt-crdit/receipt-crdit.controller';
-import { ReceiptCrditService } from './receipt-crdit/receipt-crdit.service';
+import { ReceiptCrditController } from './receipt-credit/receipt-credit.controller';
+import { ReceiptCrditService } from './receipt-credit/receipt-credit.service';
 import { ReceiptCancelService } from './receipt-cancel/receipt-cancel.service';
 import { ReceiptCancelController } from './receipt-cancel/receipt-cancel.controller';
 import { OracleFinReceiptCheques } from './entities/oracle/fin-receipt-cheque.entity';
 import { OracleFinReceiptCredits } from './entities/oracle/fin-receipt-credit.entity';
 import { OracleFinReceiptCancels } from './entities/oracle/fin-receipt-cancel.entity';
-import { ReceiptPaymentService } from './receipt-payment/receipt-payment.service';
-import { ReceiptPaymentController } from './receipt-payment/receipt-payment.controller';
-import { ReceiptPaymentDetailController } from './receipt-payment-detail/receipt-payment-detail.controller';
-import { ReceiptPaymentDetailService } from './receipt-payment-detail/receipt-payment-detail.service';
+import { PaymentService } from './payment/payment.service';
+import { PaymentController } from './payment/payment.controller';
+import { PaymentDetailController } from './payment-detail/payment-detail.controller';
+import { PaymentDetailService } from './payment-detail/payment-detail.service';
 import { ReceiptBalanceHistoryService } from './receipt-balance-history/receipt-balance-history.service';
 import { ReceiptBalanceHistoryController } from './receipt-balance-history/receipt-balance-history.controller';
 import { OracleFinPayments } from './entities/oracle/fin-payment.entity';
@@ -54,8 +54,8 @@ import { OracleFinReceiptBalanceHistories } from './entities/oracle/fin-receipt-
     LookupModule,
     PersonModule,
   ],
-  controllers: [FinReceiptController, ReceiptDetailController, ReceiptChequeController, ReceiptCrditController, ReceiptCancelController, ReceiptPaymentController, ReceiptPaymentDetailController, ReceiptBalanceHistoryController],
-  providers: [FinReceiptService, ReceiptDetailService, ReceiptChequeService, ReceiptCrditService, ReceiptCancelService, ReceiptPaymentService, ReceiptPaymentDetailService, ReceiptBalanceHistoryService],
+  controllers: [FinReceiptController, ReceiptDetailController, ReceiptChequeController, ReceiptCrditController, ReceiptCancelController, PaymentController, PaymentDetailController, ReceiptBalanceHistoryController],
+  providers: [FinReceiptService, ReceiptDetailService, ReceiptChequeService, ReceiptCrditService, ReceiptCancelService, PaymentService, PaymentDetailService, ReceiptBalanceHistoryService],
   exports: [FinReceiptService, ReceiptDetailService, ReceiptChequeService, ReceiptCrditService, ReceiptCancelService]
 })
 export class FinanceModule { }

@@ -18,7 +18,7 @@ export class ReceiptCrditService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId !== 0) {
-        await conditions.where("A.detailId = :moduleId", { moduleId });
+        await conditions.where("A.creaditId = :moduleId", { moduleId });
       } else {
         await conditions.where("A.removedBy = 0");
       }
@@ -96,7 +96,7 @@ export class ReceiptCrditService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.detailId", "DESC");
+          .orderBy("A.creaditId", "DESC");
       }
 
       const getItems = await conditions.getMany();

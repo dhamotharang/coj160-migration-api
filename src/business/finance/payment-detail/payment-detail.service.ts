@@ -2,17 +2,15 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
-import { OracleFinPaymentDTO } from '../dto/fin-payment.dto';
-import { OracleFinReceiptDetailDTO } from '../dto/fin-receipt-detail.dto';
-import { MySQLReceiptDetails } from '../entities/mysql/receipt-detail.entity';
+import { OracleFinPaymentDetailDTO } from '../dto/fin-payment-detail.dto';
 import { MySQLReturnReceipts } from '../entities/mysql/return-receipt.entity';
-import { OracleFinPayments } from '../entities/oracle/fin-payment.entity';
+import { OracleFinPaymentDetails } from '../entities/oracle/fin-payment-detail.entity';
 
 @Injectable()
-export class ReceiptPaymentService extends HelperService {
+export class PaymentDetailService extends HelperService {
   constructor(
-    @InjectRepository(OracleFinPayments)
-    private readonly oracleFinPaymentRepositories: Repository<OracleFinPayments>,
+    @InjectRepository(OracleFinPaymentDetails)
+    private readonly oracleFinPaymentRepositories: Repository<OracleFinPaymentDetails>,
     @InjectRepository(MySQLReturnReceipts, "mysql")
     private readonly mysqlReceiptRepositories: Repository<MySQLReturnReceipts>,
   ) {
@@ -23,7 +21,7 @@ export class ReceiptPaymentService extends HelperService {
   async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
       if (moduleId !== 0) {
-        await conditions.where("A.detailId = :moduleId", { moduleId });
+        await conditions.where("A.paymentDetailId = :moduleId", { moduleId });
       } else {
         await conditions.where("A.removedBy = 0");
       }
@@ -159,7 +157,7 @@ export class ReceiptPaymentService extends HelperService {
         await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
       } else {
         await conditions
-          .orderBy("A.detailId", "DESC");
+          .orderBy("A.paymentDetailId", "DESC");
       }
 
       const getItems = await conditions.getMany();
@@ -167,7 +165,7 @@ export class ReceiptPaymentService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[oracle: find receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find payment detail failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -182,7 +180,7 @@ export class ReceiptPaymentService extends HelperService {
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[oracle: find one receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: find one payment detail failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -214,7 +212,7 @@ export class ReceiptPaymentService extends HelperService {
 
       return { items, total };
     } catch (error) {
-      throw new HttpException(`[mysql: find receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find payment detail failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -229,14 +227,14 @@ export class ReceiptPaymentService extends HelperService {
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[mysql: find one receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find one payment detail failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
 
 
   // POST Method
-  async createData(payloadId: number, data: OracleFinPaymentDTO) {
+  async createData(payloadId: number, data: OracleFinPaymentDetailDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
       const created = await this.oracleFinPaymentRepositories.create({
@@ -250,7 +248,7 @@ export class ReceiptPaymentService extends HelperService {
       await this.oracleFinPaymentRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[oracle: create receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create payment detail failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 }

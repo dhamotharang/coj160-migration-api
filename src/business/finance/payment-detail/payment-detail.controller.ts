@@ -1,14 +1,15 @@
-import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiQuery, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiQuery, ApiOperation, ApiParam, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
-import { ReceiptDetailService } from './receipt-detail.service';
+import { OracleFinPaymentDetailDTO } from '../dto/fin-payment-detail.dto';
+import { PaymentDetailService } from './payment-detail.service';
 
-@ApiTags("Finance: Receipt detail")
-@Controller('finance/receiptDetail')
-export class ReceiptDetailController {
+@ApiTags("Finance: Payment detail")
+@Controller('finance/paymentDetail')
+export class PaymentDetailController {
   constructor(
-    private mainService: ReceiptDetailService,
+    private mainService: PaymentDetailService,
     private resdata: ResponseDataController,
   ) { }
 
@@ -58,5 +59,16 @@ export class ReceiptDetailController {
 
     const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
+  }
+
+
+  // POST Method
+  @Post()
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  async createData(@Res() res, @Req() req, @Body() body: OracleFinPaymentDetailDTO) {
+    const resdata = await this.mainService.createData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 }
