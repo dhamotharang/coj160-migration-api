@@ -40,4 +40,26 @@ export class MigrationLogController {
     const resdata = await this.mainService.findPOSTGRESData(query, { start, limit });
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
   }
+
+  @Get(':id')
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  @ApiParam({ name: "id" })
+  @ApiOperation({ summary: "เรียกดูข้อมูล Table ทั้งหมด" })
+  async findById(@Res() res, @Req() req, @Param('id') id) {
+    const resdata = await this.mainService.findPOSTGRESOneData(id);
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+  }
+
+
+  @Get(':type/tableName')
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  @ApiParam({ name: "type" })
+  @ApiOperation({ summary: "เรียกดูข้อมูล Table ทั้งหมด" })
+  async findTable(@Res() res, @Req() req, @Param('type') type) {
+    const resdata = await this.mainService.findTable(type);
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+  }
+
 }

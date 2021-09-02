@@ -126,6 +126,27 @@ export class MigrationLogService {
     }
   }
 
+
+  async findTable(type: string = "source") {
+    try {
+      const items = await this.migrationLogRepositories
+        .query(`
+        SELECT
+          "A"."${type}_table_name" "tableName"
+        FROM
+          "${process.env.PG_SCHEMA}"."migration_logs" "A"
+        GROUP BY "A"."${type}_table_name"
+        ORDER BY "A"."${type}_table_name" ASC
+        `);
+
+      const total = items.length;
+
+      return { items, total };
+    } catch (error) {
+      throw new HttpException(`[postgres: find table name fail] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async createPOSTGRESData(data: MigrationLogDTO) {
     try {
       const created = await this.migrationLogRepositories.create(data);

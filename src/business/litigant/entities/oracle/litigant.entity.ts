@@ -98,8 +98,8 @@ export class OracleLitigants extends HelperService {
 
     if (showAll) {
       Object.assign(responseObject, {
-        cases: cases.toResponseObject(),
-        courts: courts.toResponseObject()
+        cases: cases ? cases.toResponseObject() : null,
+        courts: courts ? courts.toResponseObject() : null
       });
     }
 

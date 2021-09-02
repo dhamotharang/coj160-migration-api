@@ -44,6 +44,14 @@ export class LitigantController {
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
   }
 
+  @Get(':litigantId')
+  @ApiParam({ name: "litigantId" })
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Page" })
+  async findById(@Res() res, @Req() req, @Query() query, @Param('litigantId') litigantId) {
+    const resdata = await this.mainService.findORACLEOneData(null, litigantId);
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param: { litigantId } });
+  }
+
 
 
 

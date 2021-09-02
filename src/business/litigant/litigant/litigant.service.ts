@@ -33,11 +33,12 @@ export class LitigantService extends HelperService {
   }
 
   // Filter zone
-  async oracleFilter(conditions, filters, moduleId: number = null) {
+  async oracleFilter(conditions, filters, moduleId: number = 0) {
     try {
-      Logger.log(filters, "filters");
-      if (moduleId) {
-        await conditions.andWhere("A.litigantId = :moduleId", { moduleId });
+      if (moduleId > 0) {
+        await conditions.where("A.litigantId = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.removedBy = 0");
       }
 
       if (filters) {
@@ -97,8 +98,7 @@ export class LitigantService extends HelperService {
       const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
         .leftJoinAndSelect("A.cases", "B")
-        .leftJoinAndSelect("A.courts", "C")
-        .where("A.removedBy = 0");
+        .leftJoinAndSelect("A.courts", "C");
 
       await this.oracleFilter(conditions, filters);
 
@@ -127,12 +127,13 @@ export class LitigantService extends HelperService {
     }
   }
 
-  async findORACLEOneData(filters: any = null) {
+  async findORACLEOneData(filters: any = null, moduleId: number = 0) {
     try {
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
-        .where("A.litigantId <> 0");
+        .leftJoinAndSelect("A.cases", "B")
+        .leftJoinAndSelect("A.courts", "C");
 
-      await this.oracleFilter(conditions, filters, (typeof filters.litigantId !== "undefined" ? filters.litigantId : null));
+      await this.oracleFilter(conditions, filters, moduleId);
 
       const total = 1;
 
