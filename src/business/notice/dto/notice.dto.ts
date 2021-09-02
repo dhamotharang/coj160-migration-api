@@ -31,7 +31,7 @@ export class OracleNoticeDTO {
   @ApiProperty() sendToCourt: number;
   @ApiProperty() isCountryArea: number;
   @ApiProperty() isCourtArea: number;
-  @ApiProperty() litigantId: number;
+  // @ApiProperty() litigantId: number;
   /* 
     @ApiProperty() alley: string;
     @ApiProperty() appointListCode: string;

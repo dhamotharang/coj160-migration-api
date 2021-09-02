@@ -25,6 +25,7 @@ import { LitigantService } from './litigant/litigant.service';
     LookupModule
   ],
   controllers: [LitigantController, RequestController],
-  providers: [LitigantService, RequestService]
+  providers: [LitigantService, RequestService],
+  exports: [LitigantService, RequestService]
 })
 export class LitigantModule { }

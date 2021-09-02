@@ -9,6 +9,7 @@ import { NoticeService } from './notice/notice.service';
 import { NoticeSendController } from './notice-send/notice-send.controller';
 import { NoticeSendService } from './notice-send/notice-send.service';
 import { MySQLNoticeSends } from './entities/mysql/notice-send.entity';
+import { LitigantModule } from '../litigant/litigant.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MySQLNoticeSends } from './entities/mysql/notice-send.entity';
     ], "mysql"),
     CaseModule,
     LookupModule,
+    LitigantModule
   ],
   controllers: [NoticeController, NoticeSendController],
   providers: [NoticeService, NoticeSendService]

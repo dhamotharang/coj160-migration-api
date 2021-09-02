@@ -349,14 +349,14 @@ export class FinReceiptService extends HelperService {
               sourceData: JSON.stringify(source.items[index]),
             })); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
-            const receiptTypes = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+            const cases1 = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
             const _bankName = (`${bankName}`.split('ธนาคาร'))[0].trim();
             const banks = await (await this.lookupBankService.findORACLEOneData({ text: _bankName })).items;
             const userProfiles = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${userrcvName}`.trim() })).items;
 
-            if (!receiptTypes) { // ถ้าไม่มีให้ทำงาน
+            if (!cases1) { // ถ้าไม่มีให้ทำงาน
               const createData = {
-                caseId: receiptTypes.caseId,
+                caseId: cases1.caseId,
                 changeAmount: returnCash,
                 courtId: parseInt(params.paramValue),
                 directorBy: 0,
@@ -554,108 +554,108 @@ export class FinReceiptService extends HelperService {
 
 
                 // Payment
-                const cases = await (await this.caseService.findORACLEOneData({ convertStringCase: paymentRunId })).items;
+                const cases2 = await (await this.caseService.findORACLEOneData({ convertStringCase: paymentRunId })).items;
                 const userProfiles2 = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${paymentCreateUser}`.trim() })).items;
+                if (cases2) {
+                  const createPaymentData = {
+                    caseId: cases2.caseId,
+                    courtId: parseInt(params.paramValue),
+                    isLabor: 1,
+                    payer1: userProfiles2.userProfileId,
+                    payer1Name: userProfiles2.userProfileFullName,
+                    paymentDate: paymentCreateDate,
+                    refCodeNo: 0,
+                    remark,
+                    totalAmount: paymentPayAmt
+                  };
+                  const createPayment = await this.paymentService.createData(payloadId, createPaymentData); // เพิ่มข้อมูล
 
-                const createPaymentData = {
-                  caseId: cases.caseId,
-                  courtId: parseInt(params.paramValue),
-                  isLabor: 1,
-                  payer1: userProfiles2.userProfileId,
-                  payer1Name: userProfiles2.userProfileFullName,
-                  paymentDate: paymentCreateDate,
-                  refCodeNo: 0,
-                  remark,
-                  totalAmount: paymentPayAmt
-                };
-                const createPayment = await this.paymentService.createData(payloadId, createPaymentData); // เพิ่มข้อมูล
+                  if (createPayment) {
+                    const migrateLog5 = {
+                      name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: (createPayment ? "SUCCESS" : "ERROR"),
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "preturn_receipt",
+                      sourceId: receiptRunning,
+                      sourceData: JSON.stringify(createPaymentData),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_FIN_RECEIPT_PAYMENT",
+                      destinationId: createPayment.paymentId,
+                      destinationData: JSON.stringify(createPayment)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
-                if (createPayment) {
-                  const migrateLog5 = {
-                    name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
-                    serverType: `${process.env.SERVER_TYPE}`,
-                    status: (createPayment ? "SUCCESS" : "ERROR"),
-                    datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                    sourceDBType: "MYSQL",
-                    sourceTableName: "preturn_receipt",
-                    sourceId: receiptRunning,
-                    sourceData: JSON.stringify(createPaymentData),
-                    destinationDBType: "ORACLE",
-                    destinationTableName: "PC_FIN_RECEIPT_PAYMENT",
-                    destinationId: createPayment.paymentId,
-                    destinationData: JSON.stringify(createPayment)
-                  }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
-
-                  await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog5)); // เพิ่ม Log การ Migrate ข้อมูล
-                }
-
-
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog5)); // เพิ่ม Log การ Migrate ข้อมูล
+                  }
 
 
 
 
-                // Payment Detail
-                const receiptTypes = await (await this.lookupReceiptTypeService.findMYSQLOneData({ receiptTypeId: paymentReceiptTypeId })).items;
+                  // Payment Detail
+                  const receiptTypes = await (await this.lookupReceiptTypeService.findMYSQLOneData({ receiptTypeId: paymentReceiptTypeId })).items;
 
-                const createPaymentDetailData = {
-                  receiptSubType: receiptTypes.receiptTypeId,
-                  receiptType: paymentSubTypeId,
-                  totalAmount: paymentPayAmt,
-                  paymentId: createPayment.paymentId,
-                  receiptDetailId: createdDetail.detailId
-                };
-                const createPaymentDetail = await this.receiptPaymentDetailService.createData(payloadId, createPaymentDetailData); // เพิ่มข้อมูล
+                  const createPaymentDetailData = {
+                    receiptSubType: receiptTypes.receiptTypeId,
+                    receiptType: paymentSubTypeId,
+                    totalAmount: paymentPayAmt,
+                    paymentId: createPayment.paymentId,
+                    receiptDetailId: createdDetail.detailId
+                  };
+                  const createPaymentDetail = await this.receiptPaymentDetailService.createData(payloadId, createPaymentDetailData); // เพิ่มข้อมูล
 
-                if (createPaymentDetail) {
-                  const migrateLog5 = {
-                    name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
-                    serverType: `${process.env.SERVER_TYPE}`,
-                    status: (createPaymentDetail ? "SUCCESS" : "ERROR"),
-                    datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                    sourceDBType: "MYSQL",
-                    sourceTableName: "preturn_receipt",
-                    sourceId: receiptRunning,
-                    sourceData: JSON.stringify(createPaymentDetailData),
-                    destinationDBType: "ORACLE",
-                    destinationTableName: "PC_FIN_PAYMENT_DETAIL",
-                    destinationId: createPaymentDetail.paymentId,
-                    destinationData: JSON.stringify(createPaymentDetail)
-                  }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+                  if (createPaymentDetail) {
+                    const migrateLog5 = {
+                      name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: (createPaymentDetail ? "SUCCESS" : "ERROR"),
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "preturn_receipt",
+                      sourceId: receiptRunning,
+                      sourceData: JSON.stringify(createPaymentDetailData),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_FIN_PAYMENT_DETAIL",
+                      destinationId: createPaymentDetail.paymentId,
+                      destinationData: JSON.stringify(createPaymentDetail)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
-                  await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog5)); // เพิ่ม Log การ Migrate ข้อมูล
-                }
-
-
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog5)); // เพิ่ม Log การ Migrate ข้อมูล
+                  }
 
 
-                // Receipt balance history
-                const cases3 = await (await this.caseService.findORACLEOneData({ convertStringCase: paymentRunId })).items;
-                const userProfiles3 = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${paymentCreateUser}`.trim() })).items;
 
-                const receiptBalanceData = {
-                  paidAmount: paymentPayAmt,
-                  paymentDetailId: createPaymentDetail.paymentDetailId,
-                  receiptDetailId: createdDetail.detailId
-                };
-                const receiptBalance = await this.receiptBalanceHistoryService.createData(payloadId, receiptBalanceData); // เพิ่มข้อมูล
 
-                if (receiptBalance) {
-                  const migrateLog6 = {
-                    name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
-                    serverType: `${process.env.SERVER_TYPE}`,
-                    status: (receiptBalance ? "SUCCESS" : "ERROR"),
-                    datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                    sourceDBType: "MYSQL",
-                    sourceTableName: "preturn_receipt",
-                    sourceId: receiptRunning,
-                    sourceData: JSON.stringify(receiptBalanceData),
-                    destinationDBType: "ORACLE",
-                    destinationTableName: "PC_FIN_RECEIPT_BALANCE_HISTORY",
-                    destinationId: receiptBalance.receiptBalanceHistoryId,
-                    destinationData: JSON.stringify(receiptBalance)
-                  }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
-                  await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog6)); // เพิ่ม Log การ Migrate ข้อมูล
+                  // Receipt balance history
+                  const cases3 = await (await this.caseService.findORACLEOneData({ convertStringCase: paymentRunId })).items;
+                  const userProfiles3 = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${paymentCreateUser}`.trim() })).items;
+
+                  const receiptBalanceData = {
+                    paidAmount: paymentPayAmt,
+                    paymentDetailId: createPaymentDetail.paymentDetailId,
+                    receiptDetailId: createdDetail.detailId
+                  };
+                  const receiptBalance = await this.receiptBalanceHistoryService.createData(payloadId, receiptBalanceData); // เพิ่มข้อมูล
+
+                  if (receiptBalance) {
+                    const migrateLog6 = {
+                      name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: (receiptBalance ? "SUCCESS" : "ERROR"),
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "preturn_receipt",
+                      sourceId: receiptRunning,
+                      sourceData: JSON.stringify(receiptBalanceData),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_FIN_RECEIPT_BALANCE_HISTORY",
+                      destinationId: receiptBalance.receiptBalanceHistoryId,
+                      destinationData: JSON.stringify(receiptBalance)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog6)); // เพิ่ม Log การ Migrate ข้อมูล
+                  }
                 }
               }
             } else {

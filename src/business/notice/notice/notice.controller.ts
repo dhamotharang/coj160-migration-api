@@ -1,6 +1,8 @@
-import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Logger, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiParam, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
+import { OracleNoticeDTO } from '../dto/notice.dto';
 import { NoticeService } from './notice.service';
 
 @ApiTags("Notice")
@@ -44,5 +46,26 @@ export class NoticeController {
 
     const resdata = await this.mainService[`find${dbtype}Data`](query, { start, limit });
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
+  }
+
+
+  // POST Method
+  @Post()
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  async createData(@Res() res, @Req() req, @Body() body: OracleNoticeDTO) {
+    Logger.log(body, "body");
+    const resdata = await this.mainService.createData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
+  }
+
+  @Post('migration')
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  async createMigration(@Res() res, @Req() req, @Body() body) {
+    const resdata = await this.mainService.createMigrationData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.total);
   }
 }

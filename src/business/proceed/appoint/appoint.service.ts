@@ -205,15 +205,19 @@ export class AppointService extends HelperService {
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
       let migrateLogs = [];
+      let dupTotal = 0;
+      let newTotal = 0;
+      let errorTotal = 0;
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.appointmentService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
-
-      if (params && await source.total > 0) {
+      const total = source.total;
+      if (params && await total > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const {
             appRunning, runId, appId, tableId, timeAppoint, appName, roomId, dateAppoint, tranReq, judgeId, resultName, delayName,
             prosWit, pageQty, accuWit, pageQty2, otherWit, pageQty3, resultId
           } = source.items[index];
+
           const appoints = await (await this.appointmentService.findMYSQLOneData({ sort: "dateAppoint-ASC", appId })).items; // ดึงค่าคำคู่ความฝั่ง MySQL
 
           const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
@@ -416,7 +420,7 @@ export class AppointService extends HelperService {
         }
       }
 
-      return migrateLogs;
+      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
     } catch (error) {
       throw new HttpException(`[oracle: migrate appoint failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
