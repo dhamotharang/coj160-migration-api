@@ -51,7 +51,7 @@ export class LookupRequestSubjectController {
   @ApiOperation({ summary: "เรียกดูข้อมูลแบบ ID" })
   @ApiParam({ name: "requestSubjectId" })
   async findOneData(@Res() res, @Req() req, @Query() query, @Param("requestSubjectId") requestSubjectId) {
-    const resdata = await this.mainService.findORACLEOneData(requestSubjectId);
+    const resdata = await this.mainService.findORACLEOneData(null, requestSubjectId);
     return this.resdata.responseFindOneSuccess(req, res, resdata.items, resdata.total, "");
   }
 

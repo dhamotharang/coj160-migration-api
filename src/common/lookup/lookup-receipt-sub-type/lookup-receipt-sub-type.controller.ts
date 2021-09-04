@@ -45,19 +45,14 @@ export class LookupReceiptSubTypeController {
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
   }
 
-  @Get(':noticeTypeId')
+  @Get(':receiptSubTypeId')
   @ApiOperation({ summary: "เรียกดูข้อมูลด้วย Id" })
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
   @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
-  @ApiParam({ name: "noticeTypeId" })
-  async findOneData(@Res() res, @Req() req, @Query() query, @Param() param) {
-    let dbtype = "ORACLE";
-    if (typeof query.dbtype !== "undefined") {
-      dbtype = query.dbtype.toUpperCase();
-    }
-
-    const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
+  @ApiParam({ name: "receiptSubTypeId" })
+  async findOneData(@Res() res, @Req() req, @Query() query, @Param("receiptSubTypeId") receiptSubTypeId) {
+    const resdata = await this.mainService.findORACLEOneData(null, receiptSubTypeId);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
   }
 

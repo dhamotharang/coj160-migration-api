@@ -49,15 +49,9 @@ export class LookupNoticeTypeController {
   @ApiOperation({ summary: "เรียกดูข้อมูลด้วย Id" })
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
-  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   @ApiParam({ name: "noticeTypeId" })
-  async findOneData(@Res() res, @Req() req, @Query() query, @Param() param) {
-    let dbtype = "ORACLE";
-    if (typeof query.dbtype !== "undefined") {
-      dbtype = query.dbtype.toUpperCase();
-    }
-
-    const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
+  async findOneData(@Res() res, @Req() req, @Query() query, @Param('noticeTypeId') noticeTypeId) {
+    const resdata = await this.mainService.findORACLEOneData(null, noticeTypeId);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
   }
 
