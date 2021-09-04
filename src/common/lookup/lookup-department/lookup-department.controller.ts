@@ -38,4 +38,14 @@ export class LookupDepartmentController {
     const resdata = await this.mainService[`find${dbtype}Data`](query, { start, limit });
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
   }
+
+
+  @Get(':departmentId')
+  @ApiParam({ name: "start" })
+  @ApiParam({ name: "limit" })
+  @ApiOperation({ summary: "เรียกดูข้อมูล แบบ ID" })
+  async findOneData(@Res() res, @Req() req, @Query() query, @Param("departmentId") departmentId) {
+    const resdata = await this.mainService.findORACLEOneData(null, departmentId);
+    return this.resdata.responseFindOneSuccess(req, res, resdata.items, resdata.total);
+  }
 }

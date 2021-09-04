@@ -19,30 +19,80 @@ export class LookupRequestTypeService extends HelperService {
     super()
   }
 
+  // Filter
+  async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
+    try {
+      if (moduleId !== 0) {
+        await conditions.where("A.requestTypeId = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.removedBy = 0");
+      }
+
+      if (filters) {
+        const { text, requestTypeName, orderNo, activeFlag, courtId } = filters;
+
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`(A.requestTypeCode LIKE '%${text}%' OR A.requestTypeName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
+        }
+
+        if (typeof requestTypeName !== "undefined") {
+          await conditions.andWhere("A.requestTypeName = :requestTypeName", { requestTypeName });
+        }
+
+        if (typeof orderNo !== "undefined") {
+          await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
+        }
+
+        if (typeof activeFlag !== "undefined") {
+          await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
+        }
+      }
+
+      return await conditions;
+    } catch (error) {
+      throw new HttpException(`[oracle: filter failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async mysqlFilter(conditions, filters: any = null, moduleId: number = 0) {
+    try {
+      if (moduleId !== 0) {
+        await conditions.where("A.reqTypeId = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.reqTypeId <> 0");
+      }
+
+      if (filters) {
+        const { text, courtId, reqTypeDesc, updateDepCode } = filters;
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`(A.reqTypeDesc LIKE '%${text}%' OR A.createDepCode LIKE '%${text}%')`)
+        }
+
+        if (typeof courtId !== "undefined") {
+          await conditions.andWhere("A.courtId = :courtId", { courtId });
+        }
+
+        if (typeof reqTypeDesc !== "undefined") {
+          await conditions.andWhere("A.reqTypeDesc = :reqTypeDesc", { reqTypeDesc });
+        }
+
+        if (typeof updateDepCode !== "undefined") {
+          await conditions.andWhere("A.updateDepCode = :updateDepCode", { updateDepCode });
+        }
+      }
+
+      return await conditions;
+    } catch (error) {
+      throw new HttpException(`[mysql: filter failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
-      const { text, requestTypeId, requestTypeName, orderNo, activeFlag, courtId } = filters;
-      const conditions = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A")
-        .where("A.removedBy = 0")
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.requestTypeCode LIKE '%${text}%' OR A.requestTypeName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
-      }
+      const conditions = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A");
 
-      if (typeof requestTypeId !== "undefined") {
-        await conditions.andWhere("A.requestTypeId = :requestTypeId", { requestTypeId });
-      }
-
-      if (typeof requestTypeName !== "undefined") {
-        await conditions.andWhere("A.requestTypeName = :requestTypeName", { requestTypeName });
-      }
-
-      if (typeof orderNo !== "undefined") {
-        await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-      }
-
-      if (typeof activeFlag !== "undefined") {
-        await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
-      }
+      await this.oracleFilter(conditions, filters);
 
       const total = await conditions.getCount();
 
@@ -69,38 +119,16 @@ export class LookupRequestTypeService extends HelperService {
     }
   }
 
-  async findORACLEOneData(filters: any = null) {
+  async findORACLEOneData(filters: any = null, moduleId: number = 0) {
     try {
-      const { text, requestTypeId, requestTypeName, orderNo, activeFlag, courtId } = filters;
-      const conditions = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A")
-        .where("A.requestTypeId <> 0");
+      const conditions = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A");
 
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.requestTypeCode LIKE '%${text}%' OR A.requestTypeName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
-      }
-
-      if (typeof requestTypeId !== "undefined") {
-        await conditions.andWhere("A.requestTypeId = :requestTypeId", { requestTypeId });
-      }
-
-      if (typeof requestTypeName !== "undefined") {
-        await conditions.andWhere("A.requestTypeName = :requestTypeName", { requestTypeName });
-      }
-
-      if (typeof orderNo !== "undefined") {
-        await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-      }
-
-      if (typeof activeFlag !== "undefined") {
-        await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
-      }
-
-      const total = await 1;
+      await this.oracleFilter(conditions, filters, moduleId);
 
       const getItems = await conditions.getOne();
       const items = await getItems ? getItems.toResponseObject() : null;
 
-      return { items, total };
+      return { items, total: items ? 1 : 0 };
     } catch (error) {
       throw new HttpException(`[oracle: find request one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
@@ -108,27 +136,9 @@ export class LookupRequestTypeService extends HelperService {
 
   async findMYSQLData(filters: any = null, pages: any = null, orders: any = null) {
     try {
-      const conditions = await this.mysqlRequestTypeRepositories.createQueryBuilder("A")
-        .where("A.reqTypeId <> 0");
+      const conditions = await this.mysqlRequestTypeRepositories.createQueryBuilder("A");
 
-      if (filters) {
-        const { text, courtId, reqTypeDesc, updateDepCode } = filters;
-        if (typeof text !== "undefined") {
-          await conditions.andWhere(`(A.reqTypeDesc LIKE '%${text}%' OR A.createDepCode LIKE '%${text}%')`)
-        }
-
-        if (typeof courtId !== "undefined") {
-          await conditions.andWhere("A.courtId = :courtId", { courtId });
-        }
-
-        if (typeof reqTypeDesc !== "undefined") {
-          await conditions.andWhere("A.reqTypeDesc = :reqTypeDesc", { reqTypeDesc });
-        }
-
-        if (typeof updateDepCode !== "undefined") {
-          await conditions.andWhere("A.updateDepCode = :updateDepCode", { updateDepCode });
-        }
-      }
+      await this.mysqlFilter(conditions, filters);
 
       const total = await conditions.getCount();
 
@@ -151,6 +161,23 @@ export class LookupRequestTypeService extends HelperService {
       const items = await getItems.map(element => element.toResponseObject());
 
       return { items, total };
+    } catch (error) {
+      throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findMYSQLOneData(filters: any = null, moduleId: number = 0) {
+    try {
+      const conditions = await this.mysqlRequestTypeRepositories.createQueryBuilder("A");
+
+      await this.mysqlFilter(conditions, filters, moduleId);
+
+      const total = await conditions.getCount();
+
+      const getItems = await conditions.getOne();
+      const items = await getItems ? getItems.toResponseObject() : null;
+
+      return { items, total: items ? 1 : 0 };
     } catch (error) {
       throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

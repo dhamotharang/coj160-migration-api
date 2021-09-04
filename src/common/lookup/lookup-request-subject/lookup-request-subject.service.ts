@@ -21,111 +21,56 @@ export class LookupRequestSubjectService extends HelperService {
     super();
   }
 
-  // GET Method
-  async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
+  // Filter
+  async oracleFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
-      const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
-      const conditions = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
-        .where("A.removedBy = 0");
-
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
-      }
-
-      if (typeof dateFlag !== "undefined") {
-        await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
-      }
-
-      if (typeof activeFlag !== "undefined") {
-        await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
-      }
-
-      if (typeof orderNo !== "undefined") {
-        await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-      }
-
-      if (typeof courtId !== "undefined") {
-        await conditions.andWhere("A.courtId = :courtId", { courtId });
-      }
-
-      if (typeof selectCode !== "undefined") {
-        await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
-      }
-
-      const total = await conditions.getCount();
-
-      if (pages) {
-        await conditions
-          .skip(pages.start)
-          .take(pages.limit);
-      }
-
-      if (typeof filters.sort !== "undefined") {
-        const _sorts = `${filters.sort}`.split('-');
-        await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
+      if (moduleId !== 0) {
+        await conditions.where("A.requestSubjectId = :moduleId", { moduleId });
       } else {
-        await conditions
-          .orderBy("A.requestSubjectId", "DESC");
+        await conditions.where("A.removedBy = 0");
       }
 
-      const getItems = await conditions.getMany();
-      const items = await getItems.map(element => element.toResponseObject());
+      if (filters) {
+        const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
 
-      return { items, total };
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
+        }
+
+        if (typeof dateFlag !== "undefined") {
+          await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
+        }
+
+        if (typeof activeFlag !== "undefined") {
+          await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
+        }
+
+        if (typeof orderNo !== "undefined") {
+          await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
+        }
+
+        if (typeof courtId !== "undefined") {
+          await conditions.andWhere("A.courtId = :courtId", { courtId });
+        }
+
+        if (typeof selectCode !== "undefined") {
+          await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
+        }
+      }
+
+      return await conditions;
     } catch (error) {
-      throw new HttpException(`[find oracle data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: filter failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
-  async findORACLEOneData(filters: any = null) {
+  async mysqlFilter(conditions, filters: any = null, moduleId: number = 0) {
     try {
-      const { text, orderNo, dateFlag, requestSubjectName, activeFlag, courtId, selectCode } = filters;
-      const conditions = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
-        .where("A.requestSubjectId <> 0");
-
-      if (typeof text !== "undefined") {
-        await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
+      if (moduleId !== 0) {
+        await conditions.where("A.subjectId = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.subjectId <> 0");
       }
-
-      if (typeof dateFlag !== "undefined") {
-        await conditions.andWhere("A.dateFlag = :dateFlag", { dateFlag });
-      }
-
-      if (typeof activeFlag !== "undefined") {
-        await conditions.andWhere("A.activeFlag = :activeFlag", { activeFlag });
-      }
-
-      if (typeof orderNo !== "undefined") {
-        await conditions.andWhere("A.orderNo = :orderNo", { orderNo });
-      }
-
-      if (typeof courtId !== "undefined") {
-        await conditions.andWhere("A.courtId = :courtId", { courtId });
-      }
-
-      if (typeof selectCode !== "undefined") {
-        await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
-      }
-
-      if (typeof requestSubjectName !== "undefined") {
-        await conditions.andWhere("A.requestSubjectName = :requestSubjectName", { requestSubjectName });
-      }
-
-      const total = 1;
-
-      const getItems = await conditions.getOne();
-      const items = await (getItems ? getItems.toResponseObject() : null);
-
-      return { items, total };
-    } catch (error) {
-      throw new HttpException(`[find oracle one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  async findMYSQLData(filters: any = null, pages: any = null, orders: any = null) {
-    try {
-      const conditions = await this.mySQLRequestSubjectsRepositories.createQueryBuilder("A")
-        .where("A.subjectId <> 0");
 
       if (filters) {
         const { text, courtRunning, subjectName, udFlag, dateFlag, createDepCode } = filters;
@@ -154,6 +99,69 @@ export class LookupRequestSubjectService extends HelperService {
         }
       }
 
+      return await conditions;
+    } catch (error) {
+      throw new HttpException(`[mysql: filter failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
+
+  // GET Method
+  async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
+    try {
+      const conditions = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A");
+
+      await this.oracleFilter(conditions, filters);
+
+      const total = await conditions.getCount();
+
+      if (pages) {
+        await conditions
+          .skip(pages.start)
+          .take(pages.limit);
+      }
+
+      if (typeof filters.sort !== "undefined") {
+        const _sorts = `${filters.sort}`.split('-');
+        await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
+      } else {
+        await conditions
+          .orderBy("A.requestSubjectId", "DESC");
+      }
+
+      const getItems = await conditions.getMany();
+      const items = await getItems.map(element => element.toResponseObject());
+
+      return { items, total };
+    } catch (error) {
+      throw new HttpException(`[find oracle data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findORACLEOneData(filters: any = null, moduleId: number = 0) {
+    try {
+      const conditions = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A");
+
+      await this.oracleFilter(conditions, filters, moduleId);
+
+      const total = 1;
+
+      const getItems = await conditions.getOne();
+      const items = await (getItems ? getItems.toResponseObject() : null);
+
+      return { items, total };
+    } catch (error) {
+      throw new HttpException(`[find oracle one data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findMYSQLData(filters: any = null, pages: any = null, orders: any = null) {
+    try {
+      const conditions = await this.mySQLRequestSubjectsRepositories.createQueryBuilder("A");
+
+      await this.mysqlFilter(conditions, filters);
+
       const total = await conditions.getCount();
 
       if (pages) {
@@ -175,6 +183,21 @@ export class LookupRequestSubjectService extends HelperService {
       const items = await getItems.map(element => element.toResponseObject());
 
       return { items, total };
+    } catch (error) {
+      throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findMYSQLOneData(filters: any = null, moduleId: number = 0) {
+    try {
+      const conditions = await this.mySQLRequestSubjectsRepositories.createQueryBuilder("A");
+
+      await this.mysqlFilter(conditions, filters, moduleId);
+
+      const getItems = await conditions.getOne();
+      const items = await getItems ? getItems.toResponseObject() : null;
+
+      return { items, total: items ? 1 : 0 };
     } catch (error) {
       throw new HttpException(`[find mysql data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

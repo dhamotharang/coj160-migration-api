@@ -44,6 +44,14 @@ export class LookupRequestTypeController {
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
   }
 
+  @Get(':requestTypeId')
+  @ApiOperation({ summary: "เรียกดูข้อมูลแบบ ID" })
+  @ApiParam({ name: "requestTypeId" })
+  async findOneData(@Res() res, @Req() req, @Query() query, @Param("requestTypeId") requestTypeId) {
+    const resdata = await this.mainService.findORACLEOneData(requestTypeId);
+    return this.resdata.responseFindOneSuccess(req, res, resdata.items, resdata.total, "");
+  }
+
 
   // POST Method
   @Post()
