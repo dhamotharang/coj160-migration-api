@@ -13,7 +13,7 @@ export class LookupDepartmentController {
 
   // Get Method
   @Get()
-  @ApiQuery({ name: "dbtype" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   async findData(@Res() res, @Req() req, @Query() query) {
     let dbtype = "ORACLE";
     if (typeof query.dbtype !== "undefined") {

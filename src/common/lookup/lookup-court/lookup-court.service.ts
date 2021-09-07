@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
 import { OracleLookupCourtDTO } from '../dto/lookup-court.dto';
+import { MySQLCourts } from '../entities/mysql/court.entity';
 import { OracleLookupCourts } from '../entities/oracle/lookup-court.entity';
 
 @Injectable()
@@ -10,6 +11,8 @@ export class LookupCourtService extends HelperService {
   constructor(
     @InjectRepository(OracleLookupCourts)
     private oracleLookupJudgeRepositories: Repository<OracleLookupCourts>,
+    @InjectRepository(MySQLCourts, "mysql")
+    private mysqlCourtRepositories: Repository<MySQLCourts>,
   ) {
     super();
   }
@@ -74,6 +77,78 @@ export class LookupCourtService extends HelperService {
     }
   }
 
+  async mysqlFilter(conditions, filters: any = null, moduleId: number = 0) {
+    try {
+      if (moduleId > 0) {
+        await conditions.where("A.courtRunning = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.courtRunning <> 0");
+      }
+
+      if (filters) {
+        const { text, courtId, stdId, courtTypeId, courtCaseType, stdCourtRunning, courtName, orgFlag, noEditFlag, courtMapping, courtEng, shortCourtName, courtType, } = filters;
+        if (typeof text !== "undefined") {
+          await conditions.andWhere(`(
+            A.courtName LIKE '%${text}%' OR
+            A.shortCourtName LIKE '%${text}%'
+            )`)
+        }
+
+        if (typeof courtId !== "undefined") {
+          await conditions.andWhere("A.courtId = :courtId", { courtId });
+        }
+
+        if (typeof stdId !== "undefined") {
+          await conditions.andWhere("A.stdId = :stdId", { stdId });
+        }
+
+        if (typeof courtTypeId !== "undefined") {
+          await conditions.andWhere("A.courtTypeId = :courtTypeId", { courtTypeId });
+        }
+
+        if (typeof courtCaseType !== "undefined") {
+          await conditions.andWhere("A.courtCaseType = :courtCaseType", { courtCaseType });
+        }
+
+        if (typeof stdCourtRunning !== "undefined") {
+          await conditions.andWhere("A.stdCourtRunning = :stdCourtRunning", { stdCourtRunning });
+        }
+
+        if (typeof orgFlag !== "undefined") {
+          await conditions.andWhere("A.orgFlag = :orgFlag", { orgFlag });
+        }
+
+        if (typeof courtName !== "undefined") {
+          await conditions.andWhere("A.courtName = :courtName", { courtName });
+        }
+
+        if (typeof noEditFlag !== "undefined") {
+          await conditions.andWhere("A.noEditFlag = :noEditFlag", { noEditFlag });
+        }
+
+        if (typeof courtMapping !== "undefined") {
+          await conditions.andWhere("A.courtMapping = :courtMapping", { courtMapping });
+        }
+
+        if (typeof courtEng !== "undefined") {
+          await conditions.andWhere("A.courtEng = :courtEng", { courtEng });
+        }
+
+        if (typeof shortCourtName !== "undefined") {
+          await conditions.andWhere("A.shortCourtName = :shortCourtName", { shortCourtName });
+        }
+
+        if (typeof courtType !== "undefined") {
+          await conditions.andWhere("A.courtType = :courtType", { courtType });
+        }
+      }
+
+      return conditions;
+    } catch (error) {
+      throw new HttpException(`[oracle: filter] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null) {
     try {
@@ -120,6 +195,54 @@ export class LookupCourtService extends HelperService {
       return { items, total };
     } catch (error) {
       throw new HttpException(`[oracle: find one lookup court failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findMYSQLData(filters: any = null, pages: any = null) {
+    try {
+      const conditions = await this.mysqlCourtRepositories.createQueryBuilder("A");
+
+      await this.mysqlFilter(conditions, filters);
+
+      const total = await conditions.getCount();
+
+      if (pages) {
+        await conditions
+          .skip(pages.start)
+          .take(pages.limit);
+      }
+
+      if (typeof filters.sort !== "undefined") {
+        const _sorts = `${filters.sort}`.split('-');
+        await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
+      } else {
+        await conditions
+          .orderBy("A.courtId", "DESC");
+      }
+
+      const getItems = await conditions.getMany();
+      const items = await getItems.map(element => element.toResponseObject());
+
+      return { items, total };
+    } catch (error) {
+      throw new HttpException(`[mysqlFilter: find lookup court failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findMYSQLOneData(filters: any = null, moduleId: number = 0) {
+    try {
+      const conditions = await this.mysqlCourtRepositories.createQueryBuilder("A");
+
+      await this.mysqlFilter(conditions, filters, moduleId);
+
+      const total = 1;
+
+      const getItems = await conditions.getOne();
+      const items = await (getItems ? getItems.toResponseObject() : null);
+
+      return { items, total };
+    } catch (error) {
+      throw new HttpException(`[mysqlFilter: find one lookup court failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

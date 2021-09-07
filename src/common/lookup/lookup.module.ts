@@ -61,6 +61,7 @@ import { LookupBankService } from './lookup-bank/lookup-bank.service';
 import { LookupBankController } from './lookup-bank/lookup-bank.controller';
 import { OracleLookupBanks } from './entities/oracle/lookup-bank.entity';
 import { MySQLBanks } from './entities/mysql/bank.entity';
+import { MySQLCourts } from './entities/mysql/court.entity';
 
 @Module({
   imports: [
@@ -95,7 +96,8 @@ import { MySQLBanks } from './entities/mysql/bank.entity';
       MySQLTambons,
       MySQLReceiptTypes,
       MySQLReceiptSubTypes,
-      MySQLBanks
+      MySQLBanks,
+      MySQLCourts
     ], "mysql"),
   ],
   controllers: [
