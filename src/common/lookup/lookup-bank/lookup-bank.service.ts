@@ -4,6 +4,7 @@ import { MigrationLogService } from 'src/common/migrate/migration-log/migration-
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
+import { OracleLookupBankDTO } from '../dto/lookup-bank.dto';
 import { MySQLBanks } from '../entities/mysql/bank.entity';
 import { OracleLookupBanks } from '../entities/oracle/lookup-bank.entity';
 
@@ -11,7 +12,7 @@ import { OracleLookupBanks } from '../entities/oracle/lookup-bank.entity';
 export class LookupBankService extends HelperService {
   constructor(
     @InjectRepository(OracleLookupBanks)
-    private readonly oracleLookupReceiptTypeRepositories: Repository<OracleLookupBanks>,
+    private readonly oracleLookupBankRepositories: Repository<OracleLookupBanks>,
     @InjectRepository(MySQLBanks, "mysql")
     private readonly mysqlBankRepositories: Repository<MySQLBanks>,
     private readonly migrateLogService: MigrationLogService,
@@ -79,21 +80,25 @@ export class LookupBankService extends HelperService {
       }
 
       if (filters) {
-        const { text, courtRunning, receiptTypeDesc, costFlag } = filters;
+        const { text, courtRunning, bankName, bankLogotype, stdId } = filters;
         if (typeof text !== "undefined") {
-          await conditions.andWhere(`(A.receiptTypeDesc LIKE '%${text}%' OR A.receiptTypeName LIKE '%${text}%')`)
+          await conditions.andWhere(`A.bankName LIKE '%${text}%'`)
         }
 
         if (typeof courtRunning !== "undefined") {
           await conditions.andWhere("A.courtRunning = :courtRunning", { courtRunning });
         }
 
-        if (typeof receiptTypeDesc !== "undefined") {
-          await conditions.andWhere("A.receiptTypeDesc = :receiptTypeDesc", { receiptTypeDesc });
+        if (typeof bankName !== "undefined") {
+          await conditions.andWhere("A.bankName = :bankName", { bankName });
         }
 
-        if (typeof costFlag !== "undefined") {
-          await conditions.andWhere("A.costFlag = :costFlag", { costFlag });
+        if (typeof bankLogotype !== "undefined") {
+          await conditions.andWhere("A.bankLogotype = :bankLogotype", { bankLogotype });
+        }
+
+        if (typeof stdId !== "undefined") {
+          await conditions.andWhere("A.stdId = :stdId", { stdId });
         }
       }
 
@@ -109,7 +114,7 @@ export class LookupBankService extends HelperService {
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
-      const conditions = await this.oracleLookupReceiptTypeRepositories.createQueryBuilder("A");
+      const conditions = await this.oracleLookupBankRepositories.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters);
 
@@ -140,7 +145,7 @@ export class LookupBankService extends HelperService {
 
   async findORACLEOneData(filters: any = null, moduleId: number = 0) {
     try {
-      const conditions = await this.oracleLookupReceiptTypeRepositories.createQueryBuilder("A");
+      const conditions = await this.oracleLookupBankRepositories.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters, moduleId);
 
@@ -200,4 +205,118 @@ export class LookupBankService extends HelperService {
     }
   }
 
+
+
+  // POST Method
+  async createData(payloadId: number, data: OracleLookupBankDTO) {
+    try {
+      const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
+      const created = await this.oracleLookupBankRepositories.create({ ...data, activeFlag: 1, createdBy: payloadId, updatedBy: payloadId, removedBy: 0, createdDate, updatedDate: createdDate });
+      await this.oracleLookupBankRepositories.save(created);
+      return await created.toResponseObject();
+    } catch (error) {
+      throw new HttpException(`[oracle: create bank failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async createMigrationData(payloadId: number, filters: any = null) {
+    try {
+      let migrateLogs = [];
+      let dupTotal = 0;
+      let newTotal = 0;
+      let errorTotal = 0;
+
+      const source = await this.findMYSQLData();
+      const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
+      const total = await source.total;
+
+      if (await total > 0) {
+        for (let index = 0; index < source.items.length; index++) {
+          const { bankId, bankName } = source.items[index];
+
+          const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
+            serverType: `${process.env.SERVER_TYPE}`,
+            status: "SUCCESS",
+            sourceDBType: "MYSQL",
+            sourceTableName: "pbank",
+            sourceId: bankId,
+          })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
+
+          if (migresLogs.length > 0) {
+            dupTotal = dupTotal + 1;
+
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+              name: "ธนาคาร",
+              serverType: `${process.env.SERVER_TYPE}`,
+              status: "DUPLICATE",
+              datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+              sourceDBType: "MYSQL",
+              sourceTableName: "pbank",
+              sourceId: bankId,
+              sourceData: JSON.stringify(source.items[index]),
+            })); // เพิ่ม Log การ Migrate ข้อมูล
+
+            const created = await this.updateData(bankId, payloadId, {
+              bankName,
+              courtId: parseInt(params.paramValue),
+            });
+          } else {
+            const _bankName = (`${bankName}`.replace('ธนาคาร', '')).replace('จำกัด', '');
+            const destination = await (await this.findORACLEOneData({ text: `${_bankName}`.trim() })).items;
+
+            if (!destination) {
+              const createData = {
+                bankName,
+                courtId: parseInt(params.paramValue),
+              };
+
+              const created = await this.createData(payloadId, createData);
+
+              const logData = {
+                name: "ธนาคาร",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: (created ? "SUCCESS" : "ERROR"),
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "pbank",
+                sourceId: bankId,
+                sourceData: JSON.stringify({ bankId, bankName }),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_BANK",
+                destinationId: created.bankId,
+                destinationData: JSON.stringify(created)
+              };
+
+              migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
+
+              if (created) {
+                newTotal = newTotal + 1;
+              } else {
+                errorTotal = errorTotal + 1;
+              }
+            }
+          }
+        }
+
+      }
+
+      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+    } catch (error) {
+      throw new HttpException(`[oracle: Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
+
+  // PUT Method
+  async updateData(moduleId: number, payloadId: number, data: OracleLookupBankDTO) {
+    try {
+      const updatedDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
+      await this.oracleLookupBankRepositories.update({ bankId: moduleId }, { ...data, activeFlag: 1, createdBy: payloadId, updatedBy: payloadId, updatedDate });
+      const updated = await this.oracleLookupBankRepositories.findOne({ bankId: moduleId });
+      return await updated.toResponseObject();
+    } catch (error) {
+      throw new HttpException(`[oracle: update bank failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 }

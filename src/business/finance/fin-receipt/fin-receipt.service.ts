@@ -350,7 +350,7 @@ export class FinReceiptService extends HelperService {
             })); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
             const cases1 = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
-            const _bankName = (`${bankName}`.split('ธนาคาร'))[0].trim();
+            const _bankName = (`${bankName}`.replace('ธนาคาร', '')).replace('จำกัด', '');
             const banks = await (await this.lookupBankService.findORACLEOneData({ text: _bankName })).items;
             const userProfiles = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${userrcvName}`.trim() })).items;
 

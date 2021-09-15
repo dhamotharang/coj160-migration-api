@@ -44,17 +44,9 @@ import { AuthModule } from './auth/auth.module';
       database: `${process.env.PG_DATABASE}`,
       schema: `${process.env.PG_SCHEMA}`,
       entities: ['dist/**/**/postgres/*.entity{.ts,.js}'],
-      ssl: true,
-      extra: {
-        ssl: {
-          rejectUnauthorized: false,
-          ca: process.env.PG_SSL_CERT,
-        },
-      },
       synchronize: process.env.SERVER_TYPE === 'PROD' ? false : true,
       logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
       autoLoadEntities: true,
-      keepConnectionAlive: true
     }),
     AuthModule,
     HelpersModule,

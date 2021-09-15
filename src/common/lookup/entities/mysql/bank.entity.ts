@@ -5,7 +5,7 @@ import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryColumn,
 export class MySQLBanks {
   @PrimaryColumn({ name: "court_running", comment: "รหัสศาลเจ้าของระบบ" }) courtRunning: number;
   @PrimaryColumn({ name: "bank_id", comment: "รหัสธนาคาร" }) bankId: number;
-  @Column({ name: "bank_name", nullable: true, comment: "ชื่อธนาคาร" }) bankName: number;
+  @Column({ name: "bank_name", nullable: true, comment: "ชื่อธนาคาร" }) bankName: string;
   @Column({ name: "bank_logo", nullable: true, type: "longblob", comment: "logo ธนาคาร" }) bankLogo: string;
   @Column({ name: "bank_logo_type", nullable: true, comment: "content type ของ logo" }) bankLogotype: string;
   @Column({ name: "std_id", comment: "รหัสมาตราฐาน fk std_pbank.std_id" }) stdId: number;

@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiQuery, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
+import { OracleLookupBankDTO } from '../dto/lookup-bank.dto';
 import { LookupBankService } from './lookup-bank.service';
 
 @ApiTags("Lookup: Bank")
@@ -58,5 +59,27 @@ export class LookupBankController {
 
     const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
+  }
+
+
+
+
+  // POST Method
+  @Post()
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  async createData(@Res() res, @Req() req, @Body() body: OracleLookupBankDTO) {
+    const resdata = await this.mainService.createData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
+  }
+
+  @Post('migration')
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  async createMigration(@Res() res, @Req() req, @Body() body) {
+    const resdata = await this.mainService.createMigrationData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 }
