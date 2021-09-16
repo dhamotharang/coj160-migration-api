@@ -10,11 +10,29 @@ import { NoticeSendController } from './notice-send/notice-send.controller';
 import { NoticeSendService } from './notice-send/notice-send.service';
 import { MySQLNoticeSends } from './entities/mysql/notice-send.entity';
 import { LitigantModule } from '../litigant/litigant.module';
+import { NoticeProvincecialController } from './notice-provincecial/notice-provincecial.controller';
+import { NoticeProvincecialService } from './notice-provincecial/notice-provincecial.service';
+import { OracleLookupTitleCases } from 'src/common/lookup/entities/oracle/lookup-title-case.entity';
+import { OracleCaseLits } from '../case/entities/oracle/case-lit.entity';
+import { OracleNoticeProvincials } from './entities/oracle/notice-provincial.entity';
+import { NoticeIssuedService } from './notice-issued/notice-issued.service';
+import { NoticeIssuedController } from './notice-issued/notice-issued.controller';
+import { NoticeSendResultController } from './notice-send-result/notice-send-result.controller';
+import { NoticeSendResultService } from './notice-send-result/notice-send-result.service';
+import { OracleNoticeIssueds } from './entities/oracle/notice-issued.entity';
+import { OracleNoticeSendResults } from './entities/oracle/notice-send-result.entity';
+import { OracleLookupNoticeSendTypeResults } from '../proceed/entities/oracle/lookup-notice-send-type-result.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      OracleNotices
+      OracleNotices,
+      OracleNoticeProvincials,
+      OracleLookupTitleCases,
+      OracleCaseLits,
+      OracleNoticeIssueds,
+      OracleNoticeSendResults,
+      OracleLookupNoticeSendTypeResults
     ]),
     TypeOrmModule.forFeature([
       MySQLNotices,
@@ -24,7 +42,7 @@ import { LitigantModule } from '../litigant/litigant.module';
     LookupModule,
     LitigantModule
   ],
-  controllers: [NoticeController, NoticeSendController],
-  providers: [NoticeService, NoticeSendService]
+  controllers: [NoticeController, NoticeSendController, NoticeProvincecialController, NoticeIssuedController, NoticeSendResultController],
+  providers: [NoticeService, NoticeSendService, NoticeProvincecialService, NoticeIssuedService, NoticeSendResultService]
 })
 export class NoticeModule { }

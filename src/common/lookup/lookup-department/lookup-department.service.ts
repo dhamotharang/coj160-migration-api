@@ -222,10 +222,10 @@ export class LookupDepartmentService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
-      let dupTotal = 0;
-      let newTotal = 0;
-      let errorTotal = 0;
+      let migrateLogs = []; // Log ทั้งหมด
+      let dupTotal = 0; // ข้อมูลซ้ำทั้งหมด
+      let newTotal = 0; // ข้อมูลใหม่ทั้งหมด
+      let errorTotal = 0; // ข้อมูลผิดพลาดทั้งหมด
 
       const source = await this.findMYSQLData();
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล

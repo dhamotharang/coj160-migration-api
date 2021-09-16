@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { OracleLookupRequestSubjectDTO } from 'src/common/lookup/dto/lookup-request-subject.dto';
@@ -31,7 +31,7 @@ export class LookupRequestSubjectService extends HelperService {
       }
 
       if (filters) {
-        const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
+        const { text, orderNo, dateFlag, activeFlag, courtId, selectCode, requestSubjectName } = filters;
 
         if (typeof text !== "undefined") {
           await conditions.andWhere(`(A.requestSubjectCode LIKE '%${text}%' OR A.requestSubjectName LIKE '%${text}%' OR A.selectCode LIKE '%${text}%')`)
@@ -55,6 +55,10 @@ export class LookupRequestSubjectService extends HelperService {
 
         if (typeof selectCode !== "undefined") {
           await conditions.andWhere("A.selectCode = :selectCode", { selectCode });
+        }
+
+        if (typeof requestSubjectName !== "undefined") {
+          await conditions.andWhere("A.requestSubjectName = :requestSubjectName", { requestSubjectName });
         }
       }
 
@@ -219,41 +223,81 @@ export class LookupRequestSubjectService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
+      let migrateLogs = []; // Log ทั้งหมด
+      let dupTotal = 0; // ข้อมูลซ้ำทั้งหมด
+      let newTotal = 0; // ข้อมูลใหม่ทั้งหมด
+      let oldTotal = 0; // ข้อมูลเก่าทั้งหมด
+      let errorTotal = 0; // ข้อมูลผิดพลาดทั้งหมด
+
       const source = await this.findMYSQLData();
-      let migrateLogs = {};
-      if (await source.total > 0) {
+      const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
+      const total = await source.total;
+
+      if (await total > 0) {
         for (let index = 0; index < source.items.length; index++) {
-          const element = source.items[index];
-          const destination: any = await (await this.findORACLEOneData({ requestSubjectName: `${element.subjectName}`.trim() })).items;
+          const { subjectId, subjectName } = source.items[index];
 
-          if (!destination) {
-            const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
-            const created = await this.createData(payloadId, {
-              requestSubjectName: `${element.subjectName}`.trim(),
-              courtId: parseInt(params.paramValue),
-              activeFlag: 1,
-            });
+          const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
+            serverType: `${process.env.SERVER_TYPE}`,
+            status: "SUCCESS",
+            sourceDBType: "MYSQL",
+            sourceTableName: "prequest_subject",
+            sourceId: subjectId,
+          })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
-            const logData = {
+          if (migresLogs.total === 0) {
+            const destination = await (await this.findORACLEData({ requestSubjectName: `${subjectName}`.trim() }));
+
+            if (destination.total === 0) {
+              const created = await this.createData(payloadId, {
+                requestSubjectName: `${subjectName}`.trim(),
+                courtId: parseInt(params.paramValue),
+                activeFlag: 1,
+              });
+
+              const logData = {
+                name: "เรื่องในคำคู่ความ",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: (created ? "SUCCESS" : "ERROR"),
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "prequest_subject",
+                sourceId: subjectId,
+                sourceData: JSON.stringify({ subjectId, subjectName }),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
+                destinationId: created.requestSubjectId,
+                destinationData: JSON.stringify(created)
+              };
+
+              migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
+
+              if (created) {
+                newTotal = newTotal + 1;
+              } else {
+                errorTotal = errorTotal + 1;
+              }
+            } else {
+              oldTotal = oldTotal + 1;
+            }
+          } else {
+            dupTotal = dupTotal + 1;
+
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "เรื่องในคำคู่ความ",
               serverType: `${process.env.SERVER_TYPE}`,
-              status: (created ? "SUCCESS" : "ERROR"),
+              status: "DUPLICATE",
               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
               sourceDBType: "MYSQL",
               sourceTableName: "prequest_subject",
-              sourceId: element.subjectId,
-              sourceData: JSON.stringify(element),
-              destinationDBType: "ORACLE",
-              destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
-              destinationId: created.requestSubjectId,
-              destinationData: JSON.stringify(created)
-            };
-            migrateLogs = await this.migrateLogService.createPOSTGRESData(logData);
+              sourceId: subjectId,
+              sourceData: JSON.stringify({ subjectId, subjectName }),
+            })); // เพิ่ม Log การ Migrate ข้อมูล
           }
         }
       }
 
-      return migrateLogs;
+      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

@@ -199,42 +199,79 @@ export class LookupRequestTypeService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
+      let migrateLogs = []; // Log ทั้งหมด
+      let dupTotal = 0; // ข้อมูลซ้ำทั้งหมด
+      let newTotal = 0; // ข้อมูลใหม่ทั้งหมด
+      let errorTotal = 0; // ข้อมูลผิดพลาดทั้งหมด
+
       const source = await this.findMYSQLData();
-      let migrateLogs = {};
-      if (await source.total > 0) {
+      const total = await source.total;
+
+      if (await total > 0) {
         for (let index = 0; index < source.items.length; index++) {
-          const element = source.items[index];
-          const destination: any = await (await this.findORACLEOneData({ requestTypeName: `${element.reqTypeDesc}`.trim() })).items;
+          const { reqTypeId, reqTypeDesc } = source.items[index];
 
-          if (!destination) {
-            const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
-            const created = await this.createData(payloadId, {
-              activeFlag: 1,
-              courtId: parseInt(params.paramValue),
-              requestTypeName: `${element.reqTypeDesc}`.trim(),
-            });
+          const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
+            serverType: `${process.env.SERVER_TYPE}`,
+            status: "SUCCESS",
+            sourceDBType: "MYSQL",
+            sourceTableName: "prequest_type",
+            sourceId: reqTypeId,
+          })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
-            const logData = {
-              name: "ประเภทคำร้อง",
+          if (migresLogs.total === 0) {
+            const destination: any = await (await this.findORACLEOneData({ requestTypeName: `${reqTypeDesc}`.trim() })).items;
+
+            if (!destination) {
+              const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
+              const created = await this.createData(payloadId, {
+                activeFlag: 1,
+                courtId: parseInt(params.paramValue),
+                requestTypeName: `${reqTypeDesc}`.trim(),
+              });
+
+              const logData = {
+                name: "ประเภทคำร้อง",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: (created ? "SUCCESS" : "ERROR"),
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "prequest_type",
+                sourceId: reqTypeId,
+                sourceData: JSON.stringify({ reqTypeId, reqTypeDesc }),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_REQUEST_TYPE",
+                destinationId: created.requestTypeId,
+                destinationData: JSON.stringify(created)
+              };
+
+              migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
+
+              if (created) {
+                newTotal = newTotal + 1;
+              } else {
+                errorTotal = errorTotal + 1;
+              }
+            }
+          } else {
+            dupTotal = dupTotal + 1;
+
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+              name: "หน่วยงาน",
               serverType: `${process.env.SERVER_TYPE}`,
-              status: (created ? "SUCCESS" : "ERROR"),
+              status: "DUPLICATE",
               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
               sourceDBType: "MYSQL",
               sourceTableName: "prequest_type",
-              sourceId: element.reqTypeId,
-              sourceData: JSON.stringify(element),
-              destinationDBType: "ORACLE",
-              destinationTableName: "PC_LOOKUP_REQUEST_TYPE",
-              destinationId: created.requestTypeId,
-              destinationData: JSON.stringify(created)
-            };
-            migrateLogs = await this.migrateLogService.createPOSTGRESData(logData);
+              sourceId: reqTypeId,
+              sourceData: JSON.stringify({ reqTypeId, reqTypeDesc }),
+            })); // เพิ่ม Log การ Migrate ข้อมูล
           }
         }
 
       }
 
-      return migrateLogs;
+      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

@@ -8,7 +8,7 @@ import { MySQLNoticeSends } from '../entities/mysql/notice-send.entity';
 export class NoticeSendService extends HelperService {
   constructor(
     @InjectRepository(MySQLNoticeSends, "mysql")
-    private mysqlNoticeSendService: Repository<MySQLNoticeSends>
+    private mysqlNoticeSendService: Repository<MySQLNoticeSends>,
   ) {
     super();
   }

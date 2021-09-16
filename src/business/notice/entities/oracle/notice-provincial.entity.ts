@@ -1,5 +1,6 @@
+import { HttpException, HttpStatus } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_PROVINCIAL" })
 export class OracleNoticeProvincials extends HelperService {
@@ -14,7 +15,7 @@ export class OracleNoticeProvincials extends HelperService {
   @Column({ name: "ADDRESS_PLACE", nullable: true, comment: "สถานที่ที่ตั้ง" }) addressPlace: string;
   @Column({ name: "ALLEGATION_DETAIL", nullable: true, comment: "ฐานความผิด" }) allegationDetail: string;
   @Column({ name: "ALLEY", nullable: true, comment: "ซอย" }) alley: string;
-  @Column({ name: "BLACK_IDNUM", comment: "เลขคดีดำ" }) balckIdnum: number;
+  @Column({ name: "BLACK_IDNUM", comment: "เลขคดีดำ" }) blackIdnum: number;
   @Column({ name: "BLACK_TITLE_ID", comment: "รหัสคำนำหน้าคดีดำ" }) blackTitleId: number;
   @Column({ name: "BLACK_YEAR", comment: "ปีเลขคดีดำ" }) blackYear: number;
   @Column({ name: "CANCEL_REASON", nullable: true, comment: "หมายเหตุที่ยกเลิก" }) cancelReason: string;
@@ -63,11 +64,22 @@ export class OracleNoticeProvincials extends HelperService {
   @Column({ name: "UPDATED_DATE", type: "timestamp", nullable: true, comment: "วันเวลาที่ลบข้อมูล" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", type: "timestamp", nullable: true, comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_NOTICE_PROVINCIAL_SEQ".nextval ID FROM DUAL`);
+      this.noticeProvincialId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: notice province before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   toResponseObject() {
-    const { noticeProvincialId, orderNo, accuDesc, address, addressNearLocation, addressPlace, allegationDetail, alley, balckIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode, currentProvinceId, currentSubdistrictId, isCancel, isCourtArea, litigantReceivedDate, moo, noticeCodeNo, noticeCodeYear, noticePrint, noticeSendStatus, noticeTypeId, officerReceivedBy, orderSendMethod, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prosDesc, receivedBy, referDoc, releaseDate, road, sendBy, sendDate, sendFee, sendMethod, tel, unsendDetail, litTypeId, litigantName, noticeSendResultStatus, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate } = this;
+    const { noticeProvincialId, orderNo, accuDesc, address, addressNearLocation, addressPlace, allegationDetail, alley, blackIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode, currentProvinceId, currentSubdistrictId, isCancel, isCourtArea, litigantReceivedDate, moo, noticeCodeNo, noticeCodeYear, noticePrint, noticeSendStatus, noticeTypeId, officerReceivedBy, orderSendMethod, postDebtDate, postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prosDesc, receivedBy, referDoc, releaseDate, road, sendBy, sendDate, sendFee, sendMethod, tel, unsendDetail, litTypeId, litigantName, noticeSendResultStatus, createdBy, updatedBy, removedBy, removedDate, createdDate, updatedDate } = this;
     const responseObject = {
       noticeProvincialId, orderNo, accuDesc, address, addressNearLocation, addressPlace, allegationDetail, alley,
-      balckIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode,
+      blackIdnum, blackTitleId, blackYear, cancelReason, caseCateId, courtId, currentDistrictId, currentPostCode,
       currentProvinceId, currentSubdistrictId, isCancel, isCourtArea, litigantReceivedDate, moo, noticeCodeNo,
       noticeCodeYear, noticePrint, noticeSendStatus, noticeTypeId, officerReceivedBy, orderSendMethod, postDebtDate,
       postDebtNo, postInvoiceDate, postSendResult, postSendTransDate, printBy, printDate, prosDesc, receivedBy,

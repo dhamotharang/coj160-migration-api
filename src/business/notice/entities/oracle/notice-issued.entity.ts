@@ -1,11 +1,13 @@
+import { HttpException, HttpStatus } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_NOTICE_ISSUED" })
 export class OracleNoticeIssueds extends HelperService {
   constructor() {
     super();
   }
+
   @PrimaryGeneratedColumn({ name: "ISSUED_ID", comment: "รหัสข้อมูลการจ่ายหมาย(AUTO INCREMENT)" }) issuedId: number;
   @Column({ name: "ORDER_NO", nullable: true, type: "float", comment: "วันเวลาที่สร้างข้อมูล" }) orderNo: number;
   @Column({ name: "EMS_CODE", nullable: true, comment: "หมายเลข EMS" }) emsCode: string;
@@ -28,11 +30,22 @@ export class OracleNoticeIssueds extends HelperService {
   @Column({ name: "UPDATED_DATE", nullable: true, comment: "วันเวลาที่ลบข้อมูล" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", nullable: true, comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) removedDate: Date;
 
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_NOTICE_ISSUED_SEQ".nextval ID FROM DUAL`);
+      this.issuedId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[oracle: notice issued before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   toResponseObject() {
     const { issuedId, orderNo, emsCode, hasMoney, isCancelIssued, isCourtArea, notes, noticeId, receiptId, receivedNoticeDate, sendNoticeDate, pnType, subdistrictName, chequeNo, payDate, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;
     const responseObject = {
-      issuedId, orderNo, emsCode, hasMoney, isCancelIssued, isCourtArea, notes, noticeId, receiptId, receivedNoticeDate, sendNoticeDate,
-      pnType, subdistrictName, chequeNo, payDate, createdBy, updatedBy, removedBy,
+      issuedId, orderNo, emsCode, hasMoney, isCancelIssued, isCourtArea, notes, noticeId, receiptId,
+      receivedNoticeDate, sendNoticeDate, pnType, subdistrictName, chequeNo, payDate, createdBy, updatedBy, removedBy,
       createdDate: createdDate ? this.dateFormat("YYYY-MM-DD H:i:s", createdDate) : null,
       removedDate: removedDate ? this.dateFormat("YYYY-MM-DD H:i:s", removedDate) : null,
       updatedDate: updatedDate ? this.dateFormat("YYYY-MM-DD H:i:s", updatedDate) : null,

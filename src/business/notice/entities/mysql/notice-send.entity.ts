@@ -26,7 +26,7 @@ export class MySQLNoticeSends extends HelperService {
   @Column({ name: "assign_off_id", nullable: true, comment: "ผู้จ่ายหมาย" }) assignOffId: string;
   @Column({ name: "assign_dep_code", nullable: true, comment: "หน่วยงานผู้จ่ายหมาย" }) assignDepCode: number;
   @Column({ name: "assign_off_date", nullable: true, comment: "วันที่บันทึกการจ่ายหมาย" }) assignOffDate: Date;
-  @Column({ name: "rcvnotice_date", nullable: true, type: "date", comment: "วันที่คู่ความรับหมาย" }) rcvnoticeDate: number;
+  @Column({ name: "rcvnotice_date", nullable: true, type: "date", comment: "วันที่คู่ความรับหมาย" }) rcvnoticeDate: Date;
   @Column({ name: "rcvnotice_time", nullable: true, comment: "เวลาที่ส่งหมาย" }) rcvnoticeTime: string;
   @Column({ name: "rcv_name", nullable: true, comment: "ผู้รับหมายแทน" }) rcvName: string;
   @Column({ name: "notice_result_desc", nullable: true, type: "text", comment: "ส่งไม่ได้เพราะ" }) noticeResultDesc: number;
@@ -43,10 +43,10 @@ export class MySQLNoticeSends extends HelperService {
   @Column({ name: "issue_to", nullable: true, comment: "เรียน ใช้ในรายงานผลการเดินหมาย" }) issueTo: string;
   @Column({ name: "approve_user", nullable: true, comment: "ผู้อนุมัติ" }) approveUser: string;
   @Column({ name: "input_result_user_id", nullable: true, comment: "รหัสผู้บันทึกผลหมาย" }) inputResultUserId: string;
-  @Column({ name: "input_result_date", nullable: true, type: "date", comment: "วันที่บันทึกผลหมาย" }) inputResultDate: number;
+  @Column({ name: "input_result_date", nullable: true, type: "date", comment: "วันที่บันทึกผลหมาย" }) inputResultDate: Date;
   @Column({ name: "input_result_time", nullable: true, type: "time", comment: "เวลาที่บันทึก" }) inputResultTime: number;
   @Column({ name: "order_desc", nullable: true, type: "text", comment: "คำสั่งศาล" }) orderDesc: number;
-  @Column({ name: "judge_order_desc", nullable: true, type: "text", comment: "คำสั่ง" }) judgeOrderDesc: number;
+  @Column({ name: "judge_order_desc", nullable: true, type: "text", comment: "คำสั่ง" }) judgeOrderDesc: string;
   @Column({ name: "judge_order_result", nullable: true, comment: "ผู้พิพากษาผู้สั่งผลการส่งหมาย" }) judgeOrderResult: string;
   @Column({ name: "judge_order_id", nullable: true, comment: "ผู้พิพากษาที่ออกคำสั่ง" }) judgeOrderId: string;
   @Column({ name: "judge_order_date", nullable: true, type: "date", comment: "วันที่ศาลสั่งคำแก้" }) judgeOrderDate: number;
