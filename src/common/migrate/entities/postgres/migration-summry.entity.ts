@@ -5,6 +5,7 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateCol
 export class PostgreSQLMigrationSummaries extends HelperService {
   con
   @PrimaryGeneratedColumn({ name: "id" }) id: number;
+  @Column({ name: "time_no", nullable: true, default: 1 }) timeNo: number;
   @Column({ name: "module" }) module: string;
   @Column({ name: "module_name" }) moduleName: string;
   @Column({ name: "source_total" }) sourceTotal: number;

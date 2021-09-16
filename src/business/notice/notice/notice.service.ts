@@ -337,15 +337,13 @@ export class NoticeService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
-      let dupTotal: number = 0;
-      let newTotal: number = 0;
-      let errorTotal: number = 0;
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData({ inoutFlag: 1 }); // ดึงค่า MySQL
-      const total: number = source.total;
 
-      if (params && await total > 0) {
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const {
             noticeRunning, runId, noticeNo, noticeYy, noticeTypeName, noticeDate, alleDesc, addrNo, addr, road, postCode, tambonId,
@@ -364,7 +362,8 @@ export class NoticeService extends HelperService {
           }); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migrateLog1.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
-            dupTotal = dupTotal + 1;
+            duplicateTotal = duplicateTotal + 1; // เติม
+
             const logData = {
               name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -426,6 +425,10 @@ export class NoticeService extends HelperService {
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
+              if (!created) {
+                errorTotal = errorTotal + 1; // เติม
+              }
+
               const migrateLog2 = {
                 name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
                 serverType: `${process.env.SERVER_TYPE}`,
@@ -444,8 +447,6 @@ export class NoticeService extends HelperService {
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog2)); // เพิ่ม Log การ Migrate ข้อมูล
 
               if (created) {
-                newTotal = newTotal + 1;
-
                 const issuedData = {
                   noticeId: created.noticeId,
                   hasMoney: 0,
@@ -541,6 +542,7 @@ export class NoticeService extends HelperService {
                   destinationData: JSON.stringify(createIssued)
                 }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
+                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
               } else {
                 errorTotal = errorTotal + 1;
               }
@@ -549,7 +551,13 @@ export class NoticeService extends HelperService {
         }
       }
 
-      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+      const cntDestination = await this.oracleNoticeRepositories.createQueryBuilder("A") // เติม
+      await this.oracleFilter(cntDestination, filters); // เติม
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await cntDestination.getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate notice failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

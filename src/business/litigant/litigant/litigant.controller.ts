@@ -23,14 +23,14 @@ export class LitigantController {
       dbtype = query.dbtype.toUpperCase();
     }
 
-    const resdata = await this.mainService[`find${dbtype}Data`](query, null);
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+    const resposneData = await this.mainService[`find${dbtype}Data`](query, null);
+    return this.resdata.responseFindSuccess(req, res, resposneData.items, resposneData.total);
   }
 
   @Get(':start/:limit/pages')
   @ApiParam({ name: "limit" })
   @ApiParam({ name: "start" })
-  @ApiQuery({ name: "dbtype" })
+  @ApiQuery({ name: "dbtype", enum: ["oracle", "mysql"] })
   @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Page" })
   async findPageData(@Res() res, @Req() req, @Query() query, @Param() param) {
     let dbtype = "ORACLE";
@@ -40,16 +40,16 @@ export class LitigantController {
 
     const { start, limit } = param;
 
-    const resdata = await this.mainService[`find${dbtype}Data`](query, { start, limit });
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
+    const resposneData = await this.mainService[`find${dbtype}Data`](query, { start, limit });
+    return this.resdata.responseFindSuccess(req, res, resposneData.items, resposneData.total, "", { param, query });
   }
 
   @Get(':litigantId')
   @ApiParam({ name: "litigantId" })
   @ApiOperation({ summary: "เรียกดูข้อมูลแบบ Page" })
   async findById(@Res() res, @Req() req, @Query() query, @Param('litigantId') litigantId) {
-    const resdata = await this.mainService.findORACLEOneData(null, litigantId);
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param: { litigantId } });
+    const resposneData = await this.mainService.findORACLEOneData(null, litigantId);
+    return this.resdata.responseFindSuccess(req, res, resposneData.items, resposneData.total, "", { param: { litigantId } });
   }
 
 
@@ -61,9 +61,8 @@ export class LitigantController {
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
   async createData(@Res() res, @Req() req, @Body() body: OracleLitigantDTO) {
-    Logger.log(body, "body");
-    const resdata = await this.mainService.createData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
+    const resposneData = await this.mainService.createData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resposneData, 100);
   }
 
   @Post('migration')
@@ -71,7 +70,7 @@ export class LitigantController {
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
-    const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.total);
+    const resposneData = await this.mainService.createMigrationData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resposneData, 100, resposneData.sourceTotal);
   }
 }

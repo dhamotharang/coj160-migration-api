@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
+import { PostgreSQLMigrationSummaryDTO } from '../dto/migration-summry.dto';
 import { SummaryService } from './summary.service';
 
 @ApiTags("Migration summary")
@@ -45,5 +46,18 @@ export class SummaryController {
   async findById(@Res() res, @Req() req, @Param('id') id) {
     const resdata = await this.mainService.findOneData(id);
     return this.resdata.responseFindOneSuccess(req, res, resdata.items, resdata.total);
+  }
+
+
+
+
+  // POST Method
+  @Post()
+  @ApiOperation({ summary: "เพิ่มข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  async createData(@Res() res, @Req() req, @Body() body: PostgreSQLMigrationSummaryDTO) {
+    const resdata = await this.mainService.createData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
   }
 }

@@ -250,11 +250,13 @@ export class LookupNoticeSendResultService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData(); // ดึงค่า MySQL
 
-      if (params && await source.total > 0) {
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const { noticeSendId, noticeSendDesc } = source.items[index];
 
@@ -267,6 +269,8 @@ export class LookupNoticeSendResultService extends HelperService {
           }); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
+            duplicateTotal = duplicateTotal + 1; // เติม
+
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "ระบบหมาย/ประกาศ: ประเภทผลการส่งหมาย",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -279,15 +283,19 @@ export class LookupNoticeSendResultService extends HelperService {
             })); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
 
-            const orAppointTables = await (await this.findORACLEOneData({ noticeSendResultName: `${noticeSendDesc}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+            const checkData = await (await this.findORACLEOneData({ noticeSendResultName: `${noticeSendDesc}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
-            if (!orAppointTables) { // ถ้าไม่มีให้ทำงาน
+            if (!checkData) { // ถ้าไม่มีให้ทำงาน
               const createData = {
                 courtId: parseInt(params.paramValue),
                 noticeSendResultName: noticeSendDesc
               }; // เตรียมข้อมูลในการเพิ่ม
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
+
+              if (!created) {
+                errorTotal = errorTotal + 1; // เติม
+              }
 
               const migrateLog1 = {
                 name: "ระบบหมาย/ประกาศ: ประเภทผลการส่งหมาย",
@@ -310,7 +318,13 @@ export class LookupNoticeSendResultService extends HelperService {
         }
       }
 
-      return migrateLogs;
+      const cntDestination = await this.oracleLookupNoticeSendResultRepositories.createQueryBuilder("A") // เติม
+      await this.oracleFilter(cntDestination, filters); // เติม
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await cntDestination.getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate notice send result failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

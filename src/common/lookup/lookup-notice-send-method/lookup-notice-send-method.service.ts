@@ -247,11 +247,13 @@ export class LookupNoticeSendMethodService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData(); // ดึงค่า MySQL
 
-      if (params && await source.total > 0) {
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const { sendById, sendByName } = source.items[index];
 
@@ -264,6 +266,8 @@ export class LookupNoticeSendMethodService extends HelperService {
           }); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migrateLog1.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
+            duplicateTotal = duplicateTotal + 1; // เติม
+
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -286,6 +290,10 @@ export class LookupNoticeSendMethodService extends HelperService {
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
+              if (!created) {
+                errorTotal = errorTotal + 1; // เติม
+              }
+
               const migrateLog2 = {
                 name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
                 serverType: `${process.env.SERVER_TYPE}`,
@@ -307,7 +315,13 @@ export class LookupNoticeSendMethodService extends HelperService {
         }
       }
 
-      return migrateLogs;
+      const cntDestination = await this.oracleLookupSendMethodRepositories.createQueryBuilder("A") // เติม
+      await this.oracleFilter(cntDestination, filters); // เติม
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await cntDestination.getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate notice send method failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

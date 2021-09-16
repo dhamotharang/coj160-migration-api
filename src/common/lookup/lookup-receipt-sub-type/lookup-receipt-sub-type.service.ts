@@ -14,7 +14,7 @@ import { LookupReceiptTypeService } from '../lookup-receipt-type/lookup-receipt-
 export class LookupReceiptSubTypeService extends HelperService {
   constructor(
     @InjectRepository(OracleLookupReceiptSubTypes)
-    private readonly oracleLookupReceiptTypeRepositories: Repository<OracleLookupReceiptSubTypes>,
+    private readonly oracleLookupReceiptSubTypeRepositories: Repository<OracleLookupReceiptSubTypes>,
     @InjectRepository(MySQLReceiptSubTypes, "mysql")
     private readonly mysqlReceiptTypeRepositories: Repository<MySQLReceiptSubTypes>,
     private readonly lookupReceiptTypeService: LookupReceiptTypeService,
@@ -174,7 +174,7 @@ export class LookupReceiptSubTypeService extends HelperService {
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
-      const conditions = await this.oracleLookupReceiptTypeRepositories.createQueryBuilder("A");
+      const conditions = await this.oracleLookupReceiptSubTypeRepositories.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters);
 
@@ -205,7 +205,7 @@ export class LookupReceiptSubTypeService extends HelperService {
 
   async findORACLEOneData(filters: any = null, moduleId: number = 0) {
     try {
-      const conditions = await this.oracleLookupReceiptTypeRepositories.createQueryBuilder("A");
+      const conditions = await this.oracleLookupReceiptSubTypeRepositories.createQueryBuilder("A");
 
       await this.oracleFilter(conditions, filters, moduleId);
 
@@ -278,7 +278,7 @@ export class LookupReceiptSubTypeService extends HelperService {
   async createData(payloadId: number, data: OracleLookupReceiptSubTypeDTO) {
     try {
       const createdDate = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
-      const created = await this.oracleLookupReceiptTypeRepositories.create({
+      const created = await this.oracleLookupReceiptSubTypeRepositories.create({
         ...data,
         activeFlag: 1,
         createdBy: payloadId,
@@ -287,7 +287,7 @@ export class LookupReceiptSubTypeService extends HelperService {
         updatedDate: createdDate,
         removedDate: createdDate
       });
-      await this.oracleLookupReceiptTypeRepositories.save(created);
+      await this.oracleLookupReceiptSubTypeRepositories.save(created);
       return await created.toResponseObject();
     } catch (error) {
       throw new HttpException(`[oracle: create lookup receipt sub type failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
@@ -296,11 +296,13 @@ export class LookupReceiptSubTypeService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData();
 
-      if (await source.total > 0) {
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const {
             receiptTypeId, subTypeId, subTypeName, costFlag, defaultValue, fineType, receiptTypeDesc,
@@ -316,6 +318,8 @@ export class LookupReceiptSubTypeService extends HelperService {
           })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs.length > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
+            duplicateTotal = duplicateTotal + 1; // เติม
+
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "ระบบการเงิน: ประเภทย่อยใบเสร็จ",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -327,10 +331,10 @@ export class LookupReceiptSubTypeService extends HelperService {
               sourceData: JSON.stringify(source.items[index]),
             })); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
-            const orAppointTables = await (await this.findORACLEOneData({ receiptSubTypeName: `${subTypeName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+            const checkData = await (await this.findORACLEOneData({ receiptSubTypeName: `${subTypeName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
             const receiptTypes = await (await this.lookupReceiptTypeService.findORACLEOneData({ receiptTypeName: `${receiptTypeDesc}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
-            if (!orAppointTables) { // ถ้าไม่มีให้ทำงาน
+            if (!checkData) { // ถ้าไม่มีให้ทำงาน
               const createData = {
                 courtId: parseInt(params.paramValue),
                 defaultValue,
@@ -345,30 +349,38 @@ export class LookupReceiptSubTypeService extends HelperService {
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
-              if (created) {
-                const migrateLog1 = {
-                  name: "ระบบการเงิน: ประเภทย่อยใบเสร็จ",
-                  serverType: `${process.env.SERVER_TYPE}`,
-                  status: (created ? "SUCCESS" : "ERROR"),
-                  datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                  sourceDBType: "MYSQL",
-                  sourceTableName: "preceipt_sub_type",
-                  sourceId: receiptTypeId,
-                  sourceData: JSON.stringify(createData),
-                  destinationDBType: "ORACLE",
-                  destinationTableName: "PC_LOOKUP_RECEIPT_SUB_TYPE",
-                  destinationId: created.receiptTypeId,
-                  destinationData: JSON.stringify(created)
-                }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
-
-                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
+              if (!created) {
+                errorTotal = errorTotal + 1; // เติม
               }
+
+              const migrateLog1 = {
+                name: "ระบบการเงิน: ประเภทย่อยใบเสร็จ",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: (created ? "SUCCESS" : "ERROR"),
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "preceipt_sub_type",
+                sourceId: receiptTypeId,
+                sourceData: JSON.stringify(createData),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_RECEIPT_SUB_TYPE",
+                destinationId: created.receiptTypeId,
+                destinationData: JSON.stringify(created)
+              }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
       }
 
-      return migrateLogs;
+      const cntDestination = await this.oracleLookupReceiptSubTypeRepositories.createQueryBuilder("A") // เติม
+      await this.oracleFilter(cntDestination, filters); // เติม
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await cntDestination.getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[Migrate lookup receipt sub type failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

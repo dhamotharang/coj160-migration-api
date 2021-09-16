@@ -72,6 +72,6 @@ export class AppointController {
   @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.total);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.sourceTotal);
   }
 }

@@ -190,7 +190,6 @@ export class LitigantService extends HelperService {
   // GET Method
   async findORACLEData(filters: any = null, pages: any = null, orders: any = null) {
     try {
-      const { text, orderNo, dateFlag, activeFlag, courtId, selectCode } = filters;
       const conditions = await this.oracleLitigantRepositories.createQueryBuilder("A")
         .leftJoinAndSelect("A.cases", "B")
         .leftJoinAndSelect("A.courts", "C");
@@ -343,15 +342,17 @@ export class LitigantService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
-      let dupTotal = 0;
-      let newTotal = 0;
-      let errorTotal = 0;
+      const cntDestination = await this.oracleLitigantRepositories.createQueryBuilder("A")
+      await this.oracleFilter(cntDestination, filters);
+      const destinationOldTotal = await cntDestination.getCount();
+
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0;
+
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLRequestData(); // ดึงค่าคำคู่ความฝั่ง MySQL
-      const total = source.total;
+      const sourceTotal = await source.total;
 
-      if (params && await total > 0) {
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const {
             reqRunning, runId, reqNo, reqYY, sequence, reqDesc, subjectName, userSubmitOrder, dateRcv, depCodeSubmit, reqOrder, orderDate, userTypeDate,
@@ -367,7 +368,8 @@ export class LitigantService extends HelperService {
           })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs1.length > 0) {
-            dupTotal = dupTotal + 1;
+            duplicateTotal = duplicateTotal + 1;
+
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "คำคู่ความ",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -393,35 +395,6 @@ export class LitigantService extends HelperService {
               department = orDepartments;
             } else {
               department = await this.prepareCreateDepartment(myDepartments, parseInt(params.paramValue));
-            }
-
-            if (!cases) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(cases, "cases");
-            }
-            if (!requestTypes) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(requestTypes, "requestTypes");
-            }
-            if (!officers) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(officers, "officers");
-            }
-            if (!myDepartments) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(myDepartments, "myDepartments");
-            }
-            if (!orDepartments) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(orDepartments, "orDepartments");
-            }
-            if (!myJudges) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(myJudges, "myJudges");
-            }
-            if (!orJudges) {
-              Logger.log("########################################################################", "NULL_DATA");
-              Logger.log(orJudges, "orJudges");
             }
 
             if (cases) {
@@ -458,6 +431,7 @@ export class LitigantService extends HelperService {
               };
 
               const created = await this.createData(payloadId, createData);
+
               const logData = {
                 name: "คำคู่ความ",
                 serverType: `${process.env.SERVER_TYPE}`,
@@ -475,9 +449,7 @@ export class LitigantService extends HelperService {
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
 
-              if (created) {
-                newTotal = newTotal + 1;
-              } else {
+              if (!created) {
                 errorTotal = errorTotal + 1;
               }
             }
@@ -485,7 +457,10 @@ export class LitigantService extends HelperService {
         }
       }
 
-      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount();
+      const destinationTotal = await cntDestination.getCount();
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal };
     } catch (error) {
       throw new HttpException(`[oracle: litigant migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

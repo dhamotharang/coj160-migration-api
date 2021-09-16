@@ -47,11 +47,11 @@ export class OracleLitigants extends HelperService {
   @Column({ name: "REQ_ORDER_ID", comment: "รหัสคำสั่งศาล เชื่อมโยง PC_LOOKUP_REQ_ORDERS" }) reqOrderId: number;
   @Column({ name: "LITIGANT_SUB_TYPE_NAME", comment: "ชื่อเรื่องในคำคู่ความ เชื่อมโยง PC_LOOKUP_REQUEST_SUBJECT " }) litigantSubTypeName: string;
   @Column({ name: "CREATED_BY", comment: "รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
-  @CreateDateColumn({ name: "CREATED_DATE", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
   @Column({ name: "UPDATED_BY", comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
-  @UpdateDateColumn({ name: "UPDATED_DATE", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_BY", default: 0, comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
-  @DeleteDateColumn({ name: "REMOVED_DATE", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
+  @CreateDateColumn({ name: "CREATED_DATE", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
+  @UpdateDateColumn({ name: "UPDATED_DATE", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
+  @Column({ name: "REMOVED_DATE", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
 
   @BeforeInsert()
   async beforeInsert() {

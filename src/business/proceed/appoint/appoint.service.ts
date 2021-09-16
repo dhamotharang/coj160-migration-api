@@ -204,14 +204,13 @@ export class AppointService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = [];
-      let dupTotal = 0;
-      let newTotal = 0;
-      let errorTotal = 0;
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.appointmentService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
-      const total = source.total;
-      if (params && await total > 0) {
+
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const {
             appRunning, runId, appId, tableId, timeAppoint, appName, roomId, dateAppoint, tranReq, judgeId, resultName, delayName,
@@ -226,9 +225,11 @@ export class AppointService extends HelperService {
             sourceDBType: "MYSQL",
             sourceTableName: "pappointment",
             sourceId: appRunning,
-          })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
+          })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
-          if (migresLogs.length > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
+          if (migresLogs.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
+            duplicateTotal = duplicateTotal + 1; // เติม
+
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "ระบบการพิจารณาคดี: ตารางนัด",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -257,25 +258,28 @@ export class AppointService extends HelperService {
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
+              const migrateLog1 = {
+                name: "ระบบการพิจารณาคดี: ตารางนัด",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: (created ? "SUCCESS" : "ERROR"),
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "pappointment",
+                sourceId: appRunning,
+                sourceData: JSON.stringify(createData),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_APPOINT_TABLE",
+                destinationId: created.appointId,
+                destinationData: JSON.stringify(created)
+              };
+
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
+
+              if (!created) {
+                errorTotal = errorTotal + 1; // เติม
+              }
+
               if (created) {
-                const migrateLog1 = {
-                  name: "ระบบการพิจารณาคดี: ตารางนัด",
-                  serverType: `${process.env.SERVER_TYPE}`,
-                  status: "DUPLICATE",
-                  datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                  sourceDBType: "MYSQL",
-                  sourceTableName: "pappointment",
-                  sourceId: appRunning,
-                  sourceData: JSON.stringify(createData),
-                  destinationDBType: "ORACLE",
-                  destinationTableName: "PC_LOOKUP_APPOINT_TABLE",
-                  destinationId: created.appointId,
-                  destinationData: JSON.stringify(created)
-                };
-                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
-                /* ############################################################ */
-
-
                 /* #########################
                 PC_PROCEED_APPOINT_CONTINUE
                 ######################### */
@@ -412,7 +416,7 @@ export class AppointService extends HelperService {
                   destinationData: JSON.stringify(createAppResults)
                 }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
-                // await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
+                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
                 /* ############################################################ */
               }
             }
@@ -420,7 +424,13 @@ export class AppointService extends HelperService {
         }
       }
 
-      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+      const cntDestination = await this.oracleAppointRepositories.createQueryBuilder("A") // เติม
+      await this.oracleFilter(cntDestination, filters); // เติม
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await cntDestination.getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate appoint failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

@@ -223,17 +223,13 @@ export class LookupRequestSubjectService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = []; // Log ทั้งหมด
-      let dupTotal = 0; // ข้อมูลซ้ำทั้งหมด
-      let newTotal = 0; // ข้อมูลใหม่ทั้งหมด
-      let oldTotal = 0; // ข้อมูลเก่าทั้งหมด
-      let errorTotal = 0; // ข้อมูลผิดพลาดทั้งหมด
-
       const source = await this.findMYSQLData();
-      const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
-      const total = await source.total;
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
 
-      if (await total > 0) {
+      const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const { subjectId, subjectName } = source.items[index];
 
@@ -272,16 +268,12 @@ export class LookupRequestSubjectService extends HelperService {
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
 
-              if (created) {
-                newTotal = newTotal + 1;
-              } else {
+              if (!created) {
                 errorTotal = errorTotal + 1;
               }
-            } else {
-              oldTotal = oldTotal + 1;
             }
           } else {
-            dupTotal = dupTotal + 1;
+            duplicateTotal = duplicateTotal + 1;
 
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "เรื่องในคำคู่ความ",
@@ -297,7 +289,13 @@ export class LookupRequestSubjectService extends HelperService {
         }
       }
 
-      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+      const cntDestination = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
+      await this.oracleFilter(cntDestination, filters);
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount();
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount();
+      const destinationTotal = await cntDestination.getCount();
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal };
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

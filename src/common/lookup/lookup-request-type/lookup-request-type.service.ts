@@ -199,19 +199,17 @@ export class LookupRequestTypeService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      let migrateLogs = []; // Log ทั้งหมด
-      let dupTotal = 0; // ข้อมูลซ้ำทั้งหมด
-      let newTotal = 0; // ข้อมูลใหม่ทั้งหมด
-      let errorTotal = 0; // ข้อมูลผิดพลาดทั้งหมด
-
+      const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
       const source = await this.findMYSQLData();
-      const total = await source.total;
 
-      if (await total > 0) {
+      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      const sourceTotal = await source.total;  // เติม
+
+      if (await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const { reqTypeId, reqTypeDesc } = source.items[index];
 
-          const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
+          const migresLogs1 = await (await this.migrateLogService.findPOSTGRESData({
             serverType: `${process.env.SERVER_TYPE}`,
             status: "SUCCESS",
             sourceDBType: "MYSQL",
@@ -219,11 +217,10 @@ export class LookupRequestTypeService extends HelperService {
             sourceId: reqTypeId,
           })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
-          if (migresLogs.total === 0) {
+          if (migresLogs1.total === 0) {
             const destination: any = await (await this.findORACLEOneData({ requestTypeName: `${reqTypeDesc}`.trim() })).items;
 
             if (!destination) {
-              const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
               const created = await this.createData(payloadId, {
                 activeFlag: 1,
                 courtId: parseInt(params.paramValue),
@@ -247,14 +244,12 @@ export class LookupRequestTypeService extends HelperService {
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
 
-              if (created) {
-                newTotal = newTotal + 1;
-              } else {
-                errorTotal = errorTotal + 1;
+              if (!created) {
+                errorTotal = errorTotal + 1; // เติม
               }
             }
           } else {
-            dupTotal = dupTotal + 1;
+            duplicateTotal = duplicateTotal + 1; // เติม
 
             await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
               name: "หน่วยงาน",
@@ -271,7 +266,13 @@ export class LookupRequestTypeService extends HelperService {
 
       }
 
-      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+      const cntDestination = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A") // เติม
+      await this.oracleFilter(cntDestination, filters); // เติม
+      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await cntDestination.getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

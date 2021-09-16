@@ -103,7 +103,7 @@ export class SummaryService extends HelperService {
   async createData(payloadId: number, data: PostgreSQLMigrationSummaryDTO) {
     try {
       const createAt = new Date(this.dateFormat("YYYY-MM-DD H:i:s"));
-      const created = await this.postgreSQLMigrationSummaryService.create({ ...data, createBy: payloadId, createAt, modifyAt: createAt });
+      const created = await this.postgreSQLMigrationSummaryService.create({ ...data, createBy: payloadId, modifyBy: payloadId, createAt, modifyAt: createAt });
       await this.postgreSQLMigrationSummaryService.save(created);
       return await created.toResponseObject();
     } catch (error) {
