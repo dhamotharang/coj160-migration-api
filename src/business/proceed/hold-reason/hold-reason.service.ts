@@ -189,7 +189,7 @@ export class HoldReasonService extends HelperService {
     try {
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.appointDelayService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
       if (params && await source.total > 0) {
@@ -202,6 +202,8 @@ export class HoldReasonService extends HelperService {
             sourceDBType: "MYSQL",
             sourceTableName: "pappoint_delay",
             sourceId: delayId,
+            destinationDBType: "ORACLE",
+            destinationTableName: "PC_PROCEED_HOLD_REASON",
           })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs1.total === 0) {
@@ -217,12 +219,8 @@ export class HoldReasonService extends HelperService {
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
-              if (!created) {
-                errorTotal = errorTotal + 1;
-              }
-
               const logData = {
-                name: "ระบบพิจารณาคดี: เลื่อนพิจารณา",
+                name: "ระบบพิจารณาคดี: ค้างพิจารณาคดี",
                 serverType: `${process.env.SERVER_TYPE}`,
                 status: (created ? "SUCCESS" : "ERROR"),
                 datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
@@ -238,10 +236,8 @@ export class HoldReasonService extends HelperService {
 
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData)); // เพิ่ม Log การ Migrate ข้อมูล
             } else {
-              duplicateTotal = duplicateTotal + 1; // เติม
-
-              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
-                name: "ระบบพิจารณาคดี: เลื่อนพิจารณา",
+              const logData1 = {
+                name: "ระบบพิจารณาคดี: ค้างพิจารณาคดี",
                 serverType: `${process.env.SERVER_TYPE}`,
                 status: "DUPLICATE",
                 datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
@@ -249,17 +245,26 @@ export class HoldReasonService extends HelperService {
                 sourceTableName: "pappoint_delay",
                 sourceId: delayId,
                 sourceData: JSON.stringify({ delayId, delayName }),
-              })); // เพิ่ม Log การ Migrate ข้อมูล
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_PROCEED_HOLD_REASON",
+              }
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData1)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
       }
 
-      const cntDestination = await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A") // เติม
-      await this.oracleFilter(cntDestination, filters); // เติม
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
-      const destinationTotal = await cntDestination.getCount(); // เติม
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_PROCEED_HOLD_REASON",
+      };
+
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A"), filters)).getCount(); // เติม
 
       return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AppointmentService } from 'src/business/appoint/appointment/appointment.service';
@@ -45,7 +45,7 @@ export class AppointService extends HelperService {
       if (moduleId > 0) {
         await conditions.where("A.appointId = :moduleId", { moduleId });
       } else {
-        await conditions.where("A.removedBy = 0");
+        await conditions.where("A.appointId <> 0");
       }
 
       if (filters) {
@@ -207,7 +207,7 @@ export class AppointService extends HelperService {
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.appointmentService.findMYSQLData(); // ดึงค่าคำคู่ความฝั่ง MySQL
 
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
       if (await sourceTotal > 0) {
@@ -217,20 +217,18 @@ export class AppointService extends HelperService {
             prosWit, pageQty, accuWit, pageQty2, otherWit, pageQty3, resultId
           } = source.items[index];
 
-          const appoints = await (await this.appointmentService.findMYSQLOneData({ sort: "dateAppoint-ASC", appId })).items; // ดึงค่าคำคู่ความฝั่ง MySQL
-
           const migresLogs = await (await this.migrateLogService.findPOSTGRESData({
             serverType: `${process.env.SERVER_TYPE}`,
             status: "SUCCESS",
             sourceDBType: "MYSQL",
             sourceTableName: "pappointment",
             sourceId: appRunning,
+            destinationDBType: "ORACLE",
+            destinationTableName: "PC_PROCEED_APPOINT",
           })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
-            duplicateTotal = duplicateTotal + 1; // เติม
-
-            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+            const logDup = {
               name: "ระบบการพิจารณาคดี: ตารางนัด",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
@@ -239,7 +237,10 @@ export class AppointService extends HelperService {
               sourceTableName: "pappointment",
               sourceId: appRunning,
               sourceData: JSON.stringify(source.items[index]),
-            })); // เพิ่ม Log การ Migrate ข้อมูล
+              destinationDBType: "ORACLE",
+              destinationTableName: "PC_PROCEED_APPOINT",
+            };
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logDup)); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
             /* #########################
                 PC_PROCEED_APPOINT
@@ -247,8 +248,7 @@ export class AppointService extends HelperService {
             const orCases = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
             const orAppTables = await (await this.appointTableService.findORACLEOneData({ tempId: tableId })).items;
 
-            if (!orCases && orAppTables) { // ถ้าไม่มีให้ทำงาน
-
+            if (!orCases || orAppTables) { // ถ้าไม่มีให้ทำงาน
               const createData = {
                 caseId: runId,
                 reasonAppointId: 0,
@@ -272,12 +272,8 @@ export class AppointService extends HelperService {
                 destinationId: created.appointId,
                 destinationData: JSON.stringify(created)
               };
-
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
 
-              if (!created) {
-                errorTotal = errorTotal + 1; // เติม
-              }
 
               if (created) {
                 /* #########################
@@ -301,7 +297,7 @@ export class AppointService extends HelperService {
                   choice,
                   choiceTime: timeAppoint,
                   reasonAppointId: appLists ? appLists.appointListId : 0,
-                  roomId: parseInt(roomId),
+                  roomId: roomId ? parseInt(roomId) : 0,
                   translate: tranReq,
                   startDate: this.dateFormat('YYYY-MM-DD', dateAppoint)
                 });
@@ -329,6 +325,7 @@ export class AppointService extends HelperService {
                 /* #########################
                 PC_PROCEED_APPOINT_CASE_JUDGE (1 รายการต่อ 1 คดี run_id ต่อ 1 ผู้พิพากษา judge_id)
                 ######################### */
+                const appoints = await (await this.appointmentService.findMYSQLOneData({ sort: "dateAppoint-ASC", appId })).items; // ดึงค่าคำคู่ความฝั่ง MySQL
                 const myJudegs = await (await this.lookupJudgeService.findMYSQLOneData(null, parseInt(judgeId))).items;
                 const orJudges = await (await this.lookupJudgeService.findORACLEOneData({ judgeName: myJudegs.judgeName })).items;
 
@@ -370,65 +367,73 @@ export class AppointService extends HelperService {
                 const findappointDelays = await (await this.appointDelayService.findORACLEOneData({ appointDelayName: resultName })).items;
 
                 if (!findappointDelays) {
-                  const createAppDelayData = {
-                    activeFlag: 1,
-                    appointDelayName: resultName,
-                    courtId: parseInt(params.paramValue),
+                  if (resultName) {
+                    const createAppDelayData = {
+                      activeFlag: 1,
+                      appointDelayName: resultName,
+                      courtId: parseInt(params.paramValue),
+                    }
+                    appointDelays = await this.appointDelayService.createData(payloadId, createAppDelayData);
+
+                    const holdReasons = await (await this.holdReasonService.findORACLEOneData({ holdDescription: delayName })).items;
+
+                    const createAppResultData = {
+                      offenseDetail: `${runId}`,
+                      appointDate: dateAppoint,
+                      appointDelayId: appointDelays ? appointDelays.appointDelayId : null,
+                      appointId: created.appointId,
+                      appointConId: createContinues.appointConId,
+                      apointTime: timeAppoint,
+                      holdReasonId: holdReasons ? holdReasons.holdReasonId : null,
+                      caseId: orCases.caseId,
+                      investigateAccuser: prosWit,
+                      investigateAccuserDate: pageQty,
+                      investigateDefendant: accuWit,
+                      investigateDefendantDate: pageQty2,
+                      investigateOther: otherWit,
+                      investigateOtherDate: pageQty3,
+                      status: resultId,
+                    };
+                    const createAppResults = await this.appointResultService.createData(payloadId, createAppResultData);
+
+                    const migrateLog4 = {
+                      name: "ระบบการพิจารณาคดี: ผลการพิจารณาคดี",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: createCaseJudeges ? "SUCCESS" : "ERROR",
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "pappointment",
+                      sourceId: appRunning,
+                      sourceData: JSON.stringify(source.items[index]),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_PROCEED_APPOINT_RESULT",
+                      destinationId: createAppResults.appointResultId,
+                      destinationData: JSON.stringify(createAppResults)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
+                    /* ############################################################ */
                   }
-                  appointDelays = await this.appointDelayService.createData(payloadId, createAppDelayData);
                 } else {
                   appointDelays = findappointDelays
                 }
-
-                const holdReasons = await (await this.holdReasonService.findORACLEOneData({ holdDescription: delayName })).items;
-
-                const createAppResultData = {
-                  offenseDetail: `${runId}`,
-                  appointDate: dateAppoint,
-                  appointDelayId: appointDelays ? appointDelays.appointDelayId : null,
-                  appointId: created.appointId,
-                  appointConId: createContinues.appointConId,
-                  apointTime: timeAppoint,
-                  holdReasonId: holdReasons ? holdReasons.holdReasonId : null,
-                  caseId: orCases.caseId,
-                  investigateAccuser: prosWit,
-                  investigateAccuserDate: pageQty,
-                  investigateDefendant: accuWit,
-                  investigateDefendantDate: pageQty2,
-                  investigateOther: otherWit,
-                  investigateOtherDate: pageQty3,
-                  status: resultId,
-                };
-                const createAppResults = await this.appointResultService.createData(payloadId, createAppResultData);
-
-                const migrateLog4 = {
-                  name: "ระบบการพิจารณาคดี: ผลการพิจารณาคดี",
-                  serverType: `${process.env.SERVER_TYPE}`,
-                  status: createCaseJudeges ? "SUCCESS" : "ERROR",
-                  datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                  sourceDBType: "MYSQL",
-                  sourceTableName: "pappointment",
-                  sourceId: appRunning,
-                  sourceData: JSON.stringify(source.items[index]),
-                  destinationDBType: "ORACLE",
-                  destinationTableName: "PC_PROCEED_APPOINT_RESULT",
-                  destinationId: createAppResults.appointResultId,
-                  destinationData: JSON.stringify(createAppResults)
-                }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
-
-                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
-                /* ############################################################ */
               }
             }
           }
         }
       }
 
-      const cntDestination = await this.oracleAppointRepositories.createQueryBuilder("A") // เติม
-      await this.oracleFilter(cntDestination, filters); // เติม
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
-      const destinationTotal = await cntDestination.getCount(); // เติม
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_PROCEED_APPOINT",
+      };
+
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(await this.oracleAppointRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(await this.oracleAppointRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(await this.oracleAppointRepositories.createQueryBuilder("A"), filters)).getCount(); // เติม
 
       return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {

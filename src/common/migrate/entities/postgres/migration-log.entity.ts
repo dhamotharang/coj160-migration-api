@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Logger } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
-import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 import { MigrationLogDTO } from "../../dto/migration-log.dto";
 
 @Entity({ name: "migration_logs" })
@@ -10,7 +10,7 @@ export class PostgresMigrationLogs extends HelperService {
   @Column({ name: "name" }) name: string;
   @Column({ name: "server_type", enum: ["PROD", "UAT"] }) serverType: string;
   @Column({ name: "status", enum: ["SUCCESS", "ERROR", "DUPLICATE", "MATCH"] }) status: string;
-  @Column({ name: "datetime" }) datetime: Date;
+  @CreateDateColumn({ name: "datetime", type: "timestamp", default: new Date() }) datetime: Date;
   @Column({ name: "source_dbtype", enum: ["ORACLE", "MYSQL", "POSTGRES"] }) sourceDBType: string;
   @Column({ name: "source_table_name" }) sourceTableName: string;
   @Column({ name: "source_id" }) sourceId: number;

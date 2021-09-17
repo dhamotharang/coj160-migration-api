@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CaseAlleService } from 'src/business/case/case-alle/case-alle.service';
 import { CaseService } from 'src/business/case/case/case.service';
@@ -330,7 +330,7 @@ export class NoticeService extends HelperService {
 
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[oracle: create lookup notice failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create notice failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -340,7 +340,7 @@ export class NoticeService extends HelperService {
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData({ inoutFlag: 1 }); // ดึงค่า MySQL
 
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
       if (await sourceTotal > 0) {
@@ -362,17 +362,19 @@ export class NoticeService extends HelperService {
           }); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migrateLog1.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
-            duplicateTotal = duplicateTotal + 1; // เติม
-
             const logData = {
               name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
-              datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+              datetime: new Date(this.dateFormat("YYYY-MM-DD H:i:s")),
               sourceDBType: "MYSQL",
               sourceTableName: "pnotice",
               sourceId: noticeRunning,
-              sourceData: JSON.stringify(source.items[index]),
+              sourceData: JSON.stringify({
+                noticeRunning, runId, noticeNo, noticeYy, noticeTypeName, alleDesc, addrNo, addr, road, postCode, tambonId,
+                amphurId, provId, noticeType, sendAmt, sOfficerId, toCourt, noticeSends, sendBy, noticetoName, item,
+                inoutFlag
+              }),
               destinationDBType: "ORACLE",
               destinationTableName: "PC_NOTICE",
             };
@@ -380,60 +382,58 @@ export class NoticeService extends HelperService {
           } else {
 
             const orCase = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
-            const orCaseLits = await this.oracleCaseLitRepositories.findOne({ caseId: runId, litigantName: `${noticetoName}`.trim() }); // ค้นหา
 
             if (orCase) { // ถ้าไม่มีให้ทำงาน
+              const orCaseLits = await this.oracleCaseLitRepositories.findOne({ caseId: runId, litigantName: `${noticetoName}`.trim() }); // ค้นหา
               const orNoticeTypes = await (await this.noticeTypeService.findORACLEOneData({ noticeTypeName: noticeTypeName })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
               const orCaseAlles = await (await this.caseAlleService.findORACLEOneData({ caseId: orCase.caseId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
               const orAllegantion = await (await this.lookupAllegationService.findORACLEOneData({ allegationId: orCaseAlles.allegationId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
               // const orLitigants = await (await this.LitigantService.findMYSQLOneData({ allegationId: orCaseAlles.allegationId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
               const createData = {
-                caseId: orCase.caseId,
-                noticeCodeNo: noticeNo,
-                noticeCodeYear: noticeYy,
-                noticeTypeId: orNoticeTypes.noticeTypeId,
-                noticeTypeName: orNoticeTypes.noticeTypeName,
-                noticeTypeCode: orNoticeTypes.noticeTypeCode,
-                noticeDate,
-                allegationId: orCaseAlles.allegationId,
-                alleDesc: alleDesc ? alleDesc : orCase.alleDesc,
-                allegationDetail: orAllegantion.allegationName,
+                caseId: orCase ? orCase.caseId : 0,
+                noticeCodeNo: noticeNo ? noticeNo : 0,
+                noticeCodeYear: noticeYy ? noticeYy : 0,
+                noticeTypeId: orNoticeTypes ? orNoticeTypes.noticeTypeId : 0,
+                noticeTypeName: orNoticeTypes ? orNoticeTypes.noticeTypeName : null,
+                noticeTypeCode: orNoticeTypes ? orNoticeTypes.noticeTypeCode : null,
+                noticeDate: noticeDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeDate) : null,
+                allegationId: orCaseAlles ? orCaseAlles.allegationId : 0,
+                alleDesc: alleDesc ? `${alleDesc}`.trim() : `${orCase.alleDesc}`.trim(),
+                allegationDetail: orAllegantion ? `${orAllegantion.allegationName}`.trim() : null,
                 address: addrNo,
                 addressPlace: addr,
                 road,
                 currentPostCode: `${postCode}`,
-                currentSubdistrictId: parseInt(tambonId),
-                currentDistrictId: parseInt(amphurId),
-                currentProvinceId: provId,
+                currentSubdistrictId: tambonId ? parseInt(tambonId) : 0,
+                currentDistrictId: amphurId ? parseInt(amphurId) : 0,
+                currentProvinceId: provId ? provId : 0,
                 isCancel: 1,
                 noticeColor: `${noticeType}`,
                 noticeSendStatus: 1,
                 noticePrint: `${noticeType}`,
-                releaseDate,
-                printDate: typeDate,
-                sendDate: noticeSends ? noticeSends.sendDate : null,
-                sendFee: sendAmt,
-                sendBy: noticeSends ? parseInt(noticeSends.sOfficerId) : null,
-                sendMethod: sendBy,
-                sendToCourt: toCourt,
-                isCountryArea: toCourt,
-                isCourtArea: toCourt,
-                litigantId: orCaseLits.caseId,
-                litigantName: orCaseLits.litigantName,
+                releaseDate: releaseDate ? this.dateFormat('YYYY-MM-DD H:i:s', releaseDate) : null,
+                printDate: typeDate ? this.dateFormat('YYYY-MM-DD H:i:s', typeDate) : null,
+                sendDate: noticeSends ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.sendDate) : null,
+                sendFee: sendAmt ? parseFloat(this.stringToFloat(sendAmt, 2)) : 0,
+                sendBy: noticeSends ? (isNaN(parseInt(noticeSends.sOfficerId)) ? 0 : parseInt(noticeSends.sOfficerId)) : 0,
+                sendMethod: sendBy ? sendBy : 0,
+                sendToCourt: toCourt ? toCourt : 0,
+                isCountryArea: toCourt ? toCourt : 0,
+                isCourtArea: toCourt ? toCourt : 0,
+                litigantId: orCaseLits ? orCaseLits.caseId : 0,
+                litigantName: orCaseLits ? `${orCaseLits.litigantName}`.trim() : null,
               }; // เตรียมข้อมูลในการเพิ่ม
 
-              const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
+              Logger.log(createData, "createData");
 
-              if (!created) {
-                errorTotal = errorTotal + 1; // เติม
-              }
+              const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
 
               const migrateLog2 = {
                 name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
                 serverType: `${process.env.SERVER_TYPE}`,
                 status: (created ? "SUCCESS" : "ERROR"),
-                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                datetime: new Date(this.dateFormat("YYYY-MM-DD H:i:s")),
                 sourceDBType: "MYSQL",
                 sourceTableName: "pnotice",
                 sourceId: noticeRunning,
@@ -447,115 +447,133 @@ export class NoticeService extends HelperService {
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog2)); // เพิ่ม Log การ Migrate ข้อมูล
 
               if (created) {
-                const issuedData = {
-                  noticeId: created.noticeId,
-                  hasMoney: 0,
-                  isCourtArea: toCourt ? parseInt(`${toCourt}`) : 0,
-                  pnType: parseInt(`${inoutFlag}`),
-                  receivedNoticeDate: noticeSends.rcvnoticeDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.rcvnoticeDate) : null,
-                  sendNoticeDate: noticeSends.rcvnoticeDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.rcvnoticeDate) : null,
-                };
+                try {
+                  if (noticeSends.rcvnoticeDate) {
+                    const issuedData = {
+                      noticeId: created.noticeId,
+                      hasMoney: 0,
+                      isCourtArea: toCourt ? parseInt(`${toCourt}`) : 0,
+                      pnType: parseInt(`${inoutFlag}`),
+                      receivedNoticeDate: noticeSends.rcvnoticeDate,
+                      sendNoticeDate: noticeSends.rcvnoticeDate,
+                    };
 
-                const createIssued = await this.noticeIssuedService.createData(payloadId, issuedData);
+                    const createIssued = await this.noticeIssuedService.createData(payloadId, issuedData);
 
-                const migrateLog3 = {
-                  name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
-                  serverType: `${process.env.SERVER_TYPE}`,
-                  status: (created ? "SUCCESS" : "ERROR"),
-                  datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                  sourceDBType: "MYSQL",
-                  sourceTableName: "pnotice",
-                  sourceId: noticeRunning,
-                  sourceData: JSON.stringify(createData),
-                  destinationDBType: "ORACLE",
-                  destinationTableName: "PC_NOTICE_ISSUED",
-                  destinationId: created.noticeId,
-                  destinationData: JSON.stringify(createIssued)
-                }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+                    const migrateLog3 = {
+                      name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: (created ? "SUCCESS" : "ERROR"),
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "pnotice",
+                      sourceId: noticeRunning,
+                      sourceData: JSON.stringify(createData),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_NOTICE_ISSUED",
+                      destinationId: created.noticeId,
+                      destinationData: JSON.stringify(createIssued)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
-                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog3)); // เพิ่ม Log การ Migrate ข้อมูล
-
-
-                const sendResultOne = await this.oracleLookupNoticeSendTypeResults.findOne({ noticeSendTypeResultName: `${noticeSends.judgeOrderDesc}`.trim() });
-                let resultType = 0;
-                if (noticeSends.noticeResult === 1) {
-                  switch (noticeSends.noticeResultBy) {
-                    case 1: case 3:
-                      resultType = 2;
-                      break;
-                    case 2:
-                      resultType = 1;
-                      break;
-                    case 4:
-                      resultType = 3;
-                      break;
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog3)); // เพิ่ม Log การ Migrate ข้อมูล
                   }
-                } else if (noticeSends.noticeResult === 2) {
-                  resultType = 8;
+
+                } catch (error) {
+                  throw new HttpException(`[Create Notice Issued] => ${error.message}`, HttpStatus.BAD_REQUEST);
                 }
 
-                let notes = "-";
 
-                if (noticeSends.noticeResult === 2) {
-                  switch (noticeSends.noticeResultBy) {
-                    case 1: case 3:
-                      notes = "รับหมาย";
-                      break;
-                    case 2:
-                      notes = "ปิดหมาย";
-                      break;
-                    case 3:
-                      notes = "ไปรษณี";
-                      break;
-                    case 4:
-                      notes = "ปิดประกาศ";
-                      break;
+                try {
+                  if (noticeSends.judgeOrderDesc) {
+                    const sendResultOne = await this.oracleLookupNoticeSendTypeResults.findOne({ noticeSendTypeResultName: `${noticeSends.judgeOrderDesc}`.trim() });
+                    let resultType = 0;
+                    if (noticeSends.noticeResult === 1) {
+                      switch (noticeSends.noticeResultBy) {
+                        case 1: case 3:
+                          resultType = 2;
+                          break;
+                        case 2:
+                          resultType = 1;
+                          break;
+                        case 4:
+                          resultType = 3;
+                          break;
+                      }
+                    } else if (noticeSends.noticeResult === 2) {
+                      resultType = 8;
+                    }
+
+                    let notes = "-";
+
+                    if (noticeSends.noticeResult === 2) {
+                      switch (noticeSends.noticeResultBy) {
+                        case 1: case 3:
+                          notes = "รับหมาย";
+                          break;
+                        case 2:
+                          notes = "ปิดหมาย";
+                          break;
+                        case 3:
+                          notes = "ไปรษณี";
+                          break;
+                        case 4:
+                          notes = "ปิดประกาศ";
+                          break;
+                      }
+                    }
+
+                    const sendResultData = {
+                      noticeId: created.noticeId,
+                      evidenceForOrder: sendResultOne ? sendResultOne.noticeSendTypeResultId : null,
+                      resultType,
+                      notes,
+                      litigantReceivedDate: noticeSends.rcvnoticeDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.rcvnoticeDate) : null,
+                      logWarrantDate: noticeSends.inputResultDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.inputResultDate) : null,
+                      pnType: parseInt(`${inoutFlag}`),
+                      postSendTransDate: noticeSends.inputResultDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.inputResultDate) : null,
+                      sendNoticeDate: noticeSends.sendDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.sendDate) : null,
+                    };
+
+                    const sendResultCreated = await this.noticeSendResultService.createData(payloadId, sendResultData);
+
+                    const migrateLog4 = {
+                      name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: (sendResultCreated ? "SUCCESS" : "ERROR"),
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "pnotice_send",
+                      sourceId: noticeRunning,
+                      sourceData: JSON.stringify(createData),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_NOTICE_SEND_RESULT",
+                      destinationId: sendResultCreated.resultId,
+                      destinationData: JSON.stringify(sendResultCreated)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
                   }
+                } catch (error) {
+                  throw new HttpException(`[Create Notice Send Result] => ${error.message}`, HttpStatus.BAD_REQUEST);
                 }
-
-                const sendResultData = {
-                  noticeId: created.noticeId,
-                  evidenceForOrder: sendResultOne ? sendResultOne.noticeSendTypeResultId : null,
-                  resultType,
-                  notes,
-                  litigantReceivedDate: noticeSends.rcvnoticeDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.rcvnoticeDate) : null,
-                  logWarrantDate: noticeSends.inputResultDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.inputResultDate) : null,
-                  pnType: parseInt(`${inoutFlag}`),
-                  postSendTransDate: noticeSends.inputResultDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.inputResultDate) : null,
-                  sendNoticeDate: noticeSends.sendDate ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.sendDate) : null,
-                };
-
-                const sendResultCreated = await this.noticeSendResultService.createData(payloadId, sendResultData);
-
-                const migrateLog4 = {
-                  name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
-                  serverType: `${process.env.SERVER_TYPE}`,
-                  status: (sendResultCreated ? "SUCCESS" : "ERROR"),
-                  datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                  sourceDBType: "MYSQL",
-                  sourceTableName: "pnotice_send",
-                  sourceId: noticeRunning,
-                  sourceData: JSON.stringify(createData),
-                  destinationDBType: "ORACLE",
-                  destinationTableName: "PC_NOTICE_SEND_RESULT",
-                  destinationId: sendResultCreated.resultId,
-                  destinationData: JSON.stringify(createIssued)
-                }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
-
-                await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
-              } else {
-                errorTotal = errorTotal + 1;
               }
             }
           }
         }
       }
 
-      const cntDestination = await this.oracleNoticeRepositories.createQueryBuilder("A") // เติม
-      await this.oracleFilter(cntDestination, filters); // เติม
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
-      const destinationTotal = await cntDestination.getCount(); // เติม
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_LOOKUP_SEND_METHOD",
+      };
+
+      const cntDestination = await this.oracleNoticeRepositories.createQueryBuilder("A")
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
 
       return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {

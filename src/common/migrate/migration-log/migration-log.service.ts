@@ -126,6 +126,16 @@ export class MigrationLogService {
     }
   }
 
+  async countData(filters: any = null, migrationId: number = 0) {
+    try {
+      const conditions = await this.migrationLogRepositories.createQueryBuilder("A");
+      await this.postgresFilter(conditions, filters, migrationId);
+      return await conditions.getCount();
+    } catch (error) {
+      throw new HttpException(`[postgres: count migration log failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
 
   async findTable(type: string = "source") {
     try {

@@ -22,7 +22,7 @@ export class OracleCaseLits {
   @Column({ name: "LITIGANT_TYPE_ID" }) litigantTypeid: number;
   @Column({ name: "LITIGANT_TYPE_NAME", nullable: true }) litigantTypename: string;
   @Column({ name: "PERSON_TYPE_ID", nullable: true }) personTypeid: number;
-  @Column({ name: "REMARK	VARCHAR2" }) remark: string;
+  @Column({ name: "REMARK" }) remark: string;
   @Column({ name: "CASE_ID" }) caseId: number;
   @Column({ name: "CREATED_BY", default: 0 }) createdBy: number;
   @Column({ name: "UPDATED_BY", default: 0 }) updatedBy: number;

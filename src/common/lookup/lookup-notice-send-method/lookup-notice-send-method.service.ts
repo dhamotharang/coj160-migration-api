@@ -250,7 +250,7 @@ export class LookupNoticeSendMethodService extends HelperService {
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData(); // ดึงค่า MySQL
 
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
       if (await sourceTotal > 0) {
@@ -263,13 +263,13 @@ export class LookupNoticeSendMethodService extends HelperService {
             sourceDBType: "MYSQL",
             sourceTableName: "pnotice_send_type",
             sourceId: sendById,
+            destinationDBType: "ORACLE",
+            destinationTableName: "PC_LOOKUP_SEND_METHOD",
           }); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migrateLog1.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
-            duplicateTotal = duplicateTotal + 1; // เติม
-
-            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
-              name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
+            const logDup = {
+              name: "ระบบหมาย/ประกาศ: ประเภทอุทธรณ์คำสั่ง",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
@@ -277,7 +277,11 @@ export class LookupNoticeSendMethodService extends HelperService {
               sourceTableName: "pnotice_send_type",
               sourceId: sendById,
               sourceData: JSON.stringify(source.items[index]),
-            })); // เพิ่ม Log การ Migrate ข้อมูล
+              destinationDBType: "ORACLE",
+              destinationTableName: "PC_LOOKUP_SEND_METHOD",
+            };
+
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logDup)); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
 
             const orSendMethods = await (await this.findORACLEOneData({ sendMethodName: `${sendByName}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
@@ -289,10 +293,6 @@ export class LookupNoticeSendMethodService extends HelperService {
               }; // เตรียมข้อมูลในการเพิ่ม
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
-
-              if (!created) {
-                errorTotal = errorTotal + 1; // เติม
-              }
 
               const migrateLog2 = {
                 name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
@@ -315,11 +315,18 @@ export class LookupNoticeSendMethodService extends HelperService {
         }
       }
 
-      const cntDestination = await this.oracleLookupSendMethodRepositories.createQueryBuilder("A") // เติม
-      await this.oracleFilter(cntDestination, filters); // เติม
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
-      const destinationTotal = await cntDestination.getCount(); // เติม
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_LOOKUP_SEND_METHOD",
+      };
+
+      const cntDestination = await this.oracleLookupSendMethodRepositories.createQueryBuilder("A")
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
 
       return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {

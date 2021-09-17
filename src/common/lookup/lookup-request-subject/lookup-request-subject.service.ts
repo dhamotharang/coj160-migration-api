@@ -224,7 +224,7 @@ export class LookupRequestSubjectService extends HelperService {
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
       const source = await this.findMYSQLData();
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
@@ -239,6 +239,8 @@ export class LookupRequestSubjectService extends HelperService {
             sourceDBType: "MYSQL",
             sourceTableName: "prequest_subject",
             sourceId: subjectId,
+            destinationDBType: "ORACLE",
+            destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
           })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs.total === 0) {
@@ -267,15 +269,9 @@ export class LookupRequestSubjectService extends HelperService {
               };
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
-
-              if (!created) {
-                errorTotal = errorTotal + 1;
-              }
             }
           } else {
-            duplicateTotal = duplicateTotal + 1;
-
-            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+            const logData1 = {
               name: "เรื่องในคำคู่ความ",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
@@ -284,18 +280,28 @@ export class LookupRequestSubjectService extends HelperService {
               sourceTableName: "prequest_subject",
               sourceId: subjectId,
               sourceData: JSON.stringify({ subjectId, subjectName }),
-            })); // เพิ่ม Log การ Migrate ข้อมูล
+              destinationDBType: "ORACLE",
+              destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
+            };
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData1)); // เพิ่ม Log การ Migrate ข้อมูล
           }
         }
       }
 
-      const cntDestination = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
-      await this.oracleFilter(cntDestination, filters);
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount();
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount();
-      const destinationTotal = await cntDestination.getCount();
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
+      };
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal };
+      const cntDestination = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

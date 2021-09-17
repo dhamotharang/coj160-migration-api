@@ -25,7 +25,7 @@ export class OracleProceedAppointCaseJudges {
   async beforeInsert() {
     try {
       const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_PROCEED_APPOINT_CASE_JUDGE_SEQ".nextval ID FROM DUAL`);
-      this.appointId = res[0].ID;
+      this.appointCaseJudgeId = res[0].ID;
       this.orderNo = res[0].ID;
     } catch (error) {
       throw new HttpException(`[oracle: before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);

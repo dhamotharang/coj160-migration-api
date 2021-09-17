@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 import { HelperService } from "src/shared/helpers/helper.service";
-import { BeforeInsert, Column, Entity, getManager, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, Entity, getManager, JoinColumn, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { OracleProceedAppointCaseJudges } from "./proceed-appoint-case-judge.entity";
 import { OracleProceedAppointContinues } from "./proceed-appoint-continue.entity";
 import { OracleProceedAppointResults } from "./proceed-appoint-result.entity";
@@ -37,11 +37,11 @@ export class OracleProceedAppoints extends HelperService {
   @Column({ name: "ROOM_ID", nullable: true, comment: "ห้องพิจารณาคดี เชื่อมโยง PC_LOOKUP_LEVEL_ROOM" }) roomId: number;
   @Column({ name: "TWO_JUDGE", nullable: true, comment: "ตัวเลือกผู้พิพากษาสองนาย(ศาลจังหวัด)" }) twoJudge: number;
   @Column({ name: "IS_ELECTRONIC_FILING", comment: "เป็นนัดความจากระบบ E-Filing หรือไม่ ?" }) isElectronicFiling: number;
-  @Column({ name: "CREATED_BY", comment: "	รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
-  @Column({ name: "UPDATED_BY", nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
-  @Column({ name: "REMOVED_BY", comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
-  @Column({ name: "CREATED_DATE", type: "timestamp", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
-  @Column({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
+  @Column({ name: "CREATED_BY", default: 0, comment: "	รหัสผู้สร้างข้อมูล เชื่อมโยง PC_USER_PROFILE" }) createdBy: number;
+  @Column({ name: "UPDATED_BY", default: 0, nullable: true, comment: "รหัสผู้แก้ไขข้อมูลล่าสุด เชื่อมโยง PC_USER_PROFILE" }) updatedBy: number;
+  @Column({ name: "REMOVED_BY", default: 0, comment: "รหัสผู้ลบข้อมูล เชื่อมโยง PC_USER_PROFILE" }) removedBy: number;
+  @CreateDateColumn({ name: "CREATED_DATE", type: "timestamp", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
+  @UpdateDateColumn({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
 
   @OneToMany(type => OracleProceedAppointContinues, conti => conti.proceedAppoints)

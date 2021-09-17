@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
@@ -202,7 +202,7 @@ export class LookupRequestTypeService extends HelperService {
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items;
       const source = await this.findMYSQLData();
 
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = [];
       const sourceTotal = await source.total;  // เติม
 
       if (await sourceTotal > 0) {
@@ -215,6 +215,8 @@ export class LookupRequestTypeService extends HelperService {
             sourceDBType: "MYSQL",
             sourceTableName: "prequest_type",
             sourceId: reqTypeId,
+            destinationDBType: "ORACLE",
+            destinationTableName: "PC_LOOKUP_REQUEST_TYPE",
           })); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs1.total === 0) {
@@ -243,15 +245,9 @@ export class LookupRequestTypeService extends HelperService {
               };
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
-
-              if (!created) {
-                errorTotal = errorTotal + 1; // เติม
-              }
             }
           } else {
-            duplicateTotal = duplicateTotal + 1; // เติม
-
-            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+            const logData2 = {
               name: "หน่วยงาน",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
@@ -260,17 +256,27 @@ export class LookupRequestTypeService extends HelperService {
               sourceTableName: "prequest_type",
               sourceId: reqTypeId,
               sourceData: JSON.stringify({ reqTypeId, reqTypeDesc }),
-            })); // เพิ่ม Log การ Migrate ข้อมูล
+              destinationDBType: "ORACLE",
+              destinationTableName: "PC_LOOKUP_REQUEST_TYPE",
+            };
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData2)); // เพิ่ม Log การ Migrate ข้อมูล
           }
         }
 
       }
 
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_LOOKUP_REQUEST_TYPE",
+      };
+
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
       const cntDestination = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A") // เติม
-      await this.oracleFilter(cntDestination, filters); // เติม
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
-      const destinationTotal = await cntDestination.getCount(); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
 
       return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {

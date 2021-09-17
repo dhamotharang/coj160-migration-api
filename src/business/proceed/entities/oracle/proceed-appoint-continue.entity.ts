@@ -26,7 +26,7 @@ export class OracleProceedAppointContinues {
   async beforeInsert() {
     try {
       const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_PROCEED_APPOINT_CONTINUE_SEQ".nextval ID FROM DUAL`);
-      this.appointId = res[0].ID;
+      this.appointConId = res[0].ID;
       this.orderNo = res[0].ID;
     } catch (error) {
       throw new HttpException(`[oracle: before insert failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);

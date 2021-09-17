@@ -20,12 +20,12 @@ export class AppointmentService extends HelperService {
       if (moduleId > 0) {
         await conditions.where("A.appRunning = :moduleId", { moduleId });
       } else {
-        await conditions.where("A.resultName IS NOT NULL");
+        await conditions.where("A.appRunning <> 0");
       }
 
       if (filters) {
         const { text, courtRunning, runId, appSeq, timeStart, timeEnd } = filters;
-        if (typeof text !== "undefined") {
+        if (typeof text !== "undefined" && text !== "") {
           await conditions.andWhere(`A.tableName LIKE '%${text}%'`)
         }
 
@@ -66,7 +66,7 @@ export class AppointmentService extends HelperService {
   async findMYSQLData(filters: any = null, pages: any = null, id: number = 0) {
     try {
       const conditions = await this.mysqlAppointmentRepositories.createQueryBuilder("A");
-      Logger.log(filters, "filters");
+
       await this.mysqlFilter(conditions, filters, id);
 
       const total = await conditions.getCount();
@@ -83,7 +83,7 @@ export class AppointmentService extends HelperService {
           await conditions.orderBy(`A.${_sorts[0]}`, _sorts[1] === "DESC" ? "DESC" : "ASC");
         } else {
           await conditions
-            .orderBy("A.appRunning", "DESC");
+            .orderBy("A.appRunning", "ASC");
         }
       }
 

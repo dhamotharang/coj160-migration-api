@@ -4,7 +4,6 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import fs = require("fs");
 import CryptoJS = require("crypto-js");
-import { Logger } from "@nestjs/common";
 
 @Entity({ name: "users" })
 export class PostgresUsers extends HelperService {
@@ -29,8 +28,9 @@ export class PostgresUsers extends HelperService {
   @BeforeInsert()
   async hashPassword() {
     const date = this.dateFormat('YYMM');
-    const countUser = await getManager("postgresql").getRepository(PostgresUsers).count({ type: this.type });
-    this.code = `${this.type}${date}${`${(countUser + 1)}`.padStart(4, '0')}`;
+    const type = (typeof this.type !== "undefined" ? this.type : "US");
+    const countUser = await getManager("postgresql").getRepository(PostgresUsers).count({ type });
+    this.code = `${type}${date}${`${(countUser + 1)}`.padStart(4, '0')}`;
     this.password = await bcrypt.hash(this.password.trim(), 10);
 
     switch (this.type) {
