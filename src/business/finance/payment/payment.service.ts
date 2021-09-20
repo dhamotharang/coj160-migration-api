@@ -225,11 +225,11 @@ export class PaymentService extends HelperService {
       await this.mysqlFilter(conditions, filters, moduleId);
 
       const getItems = await conditions.getOne();
-      const items = await getItems.toResponseObject();
+      const items = await getItems ? getItems.toResponseObject() : null;
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[mysql: find one receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find one payment failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

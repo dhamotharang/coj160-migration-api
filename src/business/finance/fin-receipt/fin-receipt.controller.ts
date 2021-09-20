@@ -23,8 +23,8 @@ export class FinReceiptController {
       dbtype = query.dbtype.toUpperCase();
     }
 
-    const resdata = await this.mainService[`find${dbtype}Data`](query, null);
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
+    const responseData = await this.mainService[`find${dbtype}Data`](query, null);
+    return this.resdata.responseFindSuccess(req, res, responseData.items, responseData.total, "", { query });
   }
 
   @Get(':start/:limit/pages')
@@ -41,8 +41,8 @@ export class FinReceiptController {
 
     const { start, limit } = param;
 
-    const resdata = await this.mainService[`find${dbtype}Data`](query, { start, limit });
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { param, query });
+    const responseData = await this.mainService[`find${dbtype}Data`](query, { start, limit });
+    return this.resdata.responseFindSuccess(req, res, responseData.items, responseData.total, "", { param, query });
   }
 
   @Get(':noticeTypeId')
@@ -57,8 +57,8 @@ export class FinReceiptController {
       dbtype = query.dbtype.toUpperCase();
     }
 
-    const resdata = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total, "", { query });
+    const responseData = await this.mainService[`find${dbtype}OneData`](null, param.appointListId);
+    return this.resdata.responseFindSuccess(req, res, responseData.items, responseData.total, "", { query });
   }
 
 
@@ -68,8 +68,8 @@ export class FinReceiptController {
   @UseGuards(new AuthGaurd())
   @ApiOperation({ summary: "เพิ่มข้อมูล" })
   async createData(@Res() res, @Req() req, @Body() body: OracleFinReceiptDTO) {
-    const resdata = await this.mainService.createData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
+    const responseData = await this.mainService.createData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, responseData, 100);
   }
 
   @Post('migration')
@@ -77,7 +77,18 @@ export class FinReceiptController {
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
-    const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100);
+    const responseData = await this.mainService.createMigrationData(999, body);
+    return this.resdata.responseCreateSuccess(req, res, responseData, 100);
+  }
+
+
+  @Post('migration/:start/:limit/pages')
+  @ApiOperation({ summary: "นำเข้าข้อมูล" })
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  async createMigrationByPages(@Res() res, @Req() req, @Body() body, @Param() param) {
+    const { start, limit } = param;
+    const responseData = await this.mainService.createMigrationData(999, body, { start, limit });
+    return this.resdata.responseCreateSuccess(req, res, responseData, 100);
   }
 }

@@ -21,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
       logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
       autoLoadEntities: true,
       keepConnectionAlive: true,
+      retryDelay: 300
     }),
     TypeOrmModule.forRoot({
       name: 'mysql',
@@ -33,6 +34,9 @@ import { AuthModule } from './auth/auth.module';
       entities: ['dist/**/**/mysql/*.entity{.ts,.js}'],
       synchronize: false,
       logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
+      autoLoadEntities: true,
+      keepConnectionAlive: true,
+      retryDelay: 1000
     }),
     TypeOrmModule.forRoot({
       name: 'postgresql',
@@ -47,6 +51,8 @@ import { AuthModule } from './auth/auth.module';
       synchronize: process.env.SERVER_TYPE === 'PROD' ? false : true,
       logging: process.env.SERVER_TYPE === 'PROD' ? false : true,
       autoLoadEntities: true,
+      keepConnectionAlive: true,
+      retryDelay: 1000
     }),
     AuthModule,
     HelpersModule,

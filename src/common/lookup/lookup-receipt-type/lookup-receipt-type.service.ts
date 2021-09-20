@@ -225,7 +225,7 @@ export class LookupReceiptTypeService extends HelperService {
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLData();
 
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0; // เติม
+      let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
       if (await sourceTotal > 0) {
@@ -238,12 +238,12 @@ export class LookupReceiptTypeService extends HelperService {
             sourceDBType: "MYSQL",
             sourceTableName: "preceipt_type",
             sourceId: receiptTypeId,
+            destinationDBType: "ORACLE",
+            destinationTableName: "PC_LOOKUP_RECEIPT_TYPE",
           })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs.length > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
-            duplicateTotal = duplicateTotal + 1; // เติม
-
-            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+            const logDup = {
               name: "ระบบการเงิน: ประเภทใบเสร็จ",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
@@ -252,21 +252,21 @@ export class LookupReceiptTypeService extends HelperService {
               sourceTableName: "preceipt_type",
               sourceId: receiptTypeId,
               sourceData: JSON.stringify(source.items[index]),
-            })); // เพิ่ม Log การ Migrate ข้อมูล
-          } else {
-            const orAppointTables = await (await this.findORACLEOneData({ receiptTypeName: `${receiptTypeDesc}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+              destinationDBType: "ORACLE",
+              destinationTableName: "PC_LOOKUP_RECEIPT_TYPE",
+            };
 
-            if (!orAppointTables) { // ถ้าไม่มีให้ทำงาน
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logDup)); // เพิ่ม Log การ Migrate ข้อมูล
+          } else {
+            const receiptTypes = await (await this.findORACLEOneData({ receiptTypeName: `${receiptTypeDesc}`.trim() })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+
+            if (!receiptTypes) { // ถ้าไม่มีให้ทำงาน
               const createData = {
                 courtId: parseInt(params.paramValue),
                 receiptTypeName: `${receiptTypeDesc}`.trim()
               }; // เตรียมข้อมูลในการเพิ่ม
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
-
-              if (!created) {
-                errorTotal = errorTotal + 1; // เติม
-              }
 
               const migrateLog1 = {
                 name: "ระบบการเงิน: ประเภทใบเสร็จ",
@@ -284,18 +284,40 @@ export class LookupReceiptTypeService extends HelperService {
               }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
+            } else {
+              const logUnkow = {
+                name: "ระบบการเงิน: ประเภทใบเสร็จ",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "preceipt_type",
+                sourceId: receiptTypeId,
+                sourceData: JSON.stringify(source.items[index]),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_RECEIPT_TYPE",
+              }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logUnkow)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
       }
 
-      const cntDestination = await this.oracleLookupReceiptTypeRepositories.createQueryBuilder("A") // เติม
-      await this.oracleFilter(cntDestination, filters); // เติม
-      const destinationOldTotal = await cntDestination.andWhere("A.createdBy <> 999").getCount(); // เติม
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount(); // เติม
-      const destinationTotal = await cntDestination.getCount(); // เติม
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_LOOKUP_RECEIPT_TYPE",
+      };
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
+      const cntDestination = await this.oracleLookupReceiptTypeRepositories.createQueryBuilder("A")
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, unknowTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[Migrate lookup receipt type failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

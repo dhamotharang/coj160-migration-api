@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { BeforeInsert, Column, Entity, getManager, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "PC_FIN_RECEIPT_BALANCE_HISTORY" })
 export class OracleFinReceiptBalanceHistories {
@@ -15,6 +16,17 @@ export class OracleFinReceiptBalanceHistories {
   @Column({ name: "CREATED_DATE", type: "timestamp", comment: "วันเวลาที่สร้างข้อมูล" }) createdDate: Date;
   @Column({ name: "UPDATED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่แก้ไขข้อมูลล่าสุด" }) updatedDate: Date;
   @Column({ name: "REMOVED_DATE", nullable: true, type: "timestamp", comment: "วันเวลาที่ลบข้อมูล" }) removedDate: Date;
+
+  @BeforeInsert()
+  async beforeInsert() {
+    try {
+      const res = await getManager().query(`SELECT "${process.env.ORA_USERNAME}"."PC_FIN_RECEIPT_BALANCE_HISTORY_SEQ".nextval ID FROM DUAL`);
+      this.receiptBalanceHistoryId = res[0].ID;
+      this.orderNo = res[0].ID;
+    } catch (error) {
+      throw new HttpException(`[generate code failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
   toResponseObject() {
     const { receiptBalanceHistoryId, paidAmount, paymentDetailId, receiptDetailId, noticeIssuedId, orderNo, createdBy, updatedBy, removedBy, createdDate, updatedDate, removedDate } = this;

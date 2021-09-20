@@ -5,4 +5,5 @@ export class OracleFinPaymentDTO {
   @ApiProperty() refCodeNo: number;
   @ApiProperty() totalAmount: number;
   @ApiProperty() paymentDate: Date;
+  @ApiProperty() isLabor: number;
 }

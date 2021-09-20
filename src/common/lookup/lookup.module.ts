@@ -62,6 +62,9 @@ import { LookupBankController } from './lookup-bank/lookup-bank.controller';
 import { OracleLookupBanks } from './entities/oracle/lookup-bank.entity';
 import { MySQLBanks } from './entities/mysql/bank.entity';
 import { MySQLCourts } from './entities/mysql/court.entity';
+import { LookupTitleCaseController } from './lookup-title-case/lookup-title-case.controller';
+import { LookupTitleCaseService } from './lookup-title-case/lookup-title-case.service';
+import { OracleLookupTitleCases } from './entities/oracle/lookup-title-case.entity';
 
 @Module({
   imports: [
@@ -81,7 +84,8 @@ import { MySQLCourts } from './entities/mysql/court.entity';
       OracleLookupCourts,
       OracleLookupReceiptTypes,
       OracleLookupReceiptSubTypes,
-      OracleLookupBanks
+      OracleLookupBanks,
+      OracleLookupTitleCases
     ]),
     TypeOrmModule.forFeature([
       MySQLAppointDelays,
@@ -117,6 +121,7 @@ import { MySQLCourts } from './entities/mysql/court.entity';
     LookupReceiptSubTypeController,
     LookupReceiptTypeController,
     LookupBankController,
+    LookupTitleCaseController,
   ],
   providers: [
     LookupNoticeTypeService,
@@ -134,7 +139,8 @@ import { MySQLCourts } from './entities/mysql/court.entity';
     LookupCourtService,
     LookupReceiptSubTypeService,
     LookupReceiptTypeService,
-    LookupBankService
+    LookupBankService,
+    LookupTitleCaseService
   ],
   exports: [
     LookupNoticeTypeService,
@@ -152,7 +158,8 @@ import { MySQLCourts } from './entities/mysql/court.entity';
     LookupCourtService,
     LookupReceiptSubTypeService,
     LookupReceiptTypeService,
-    LookupBankService
+    LookupBankService,
+    LookupTitleCaseService
   ]
 })
 export class LookupModule { }

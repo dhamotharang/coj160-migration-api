@@ -149,6 +149,12 @@ export class DatetimeService {
       case 'DD/MM/YYYY':
         date_str = `${date}/${month}/${year}`;
         break;
+      case 'DD-MM-YY':
+        date_str = `${date}-${month}-${year2}`;
+        break;
+      case 'DD-MM-YY H:i:s':
+        date_str = `${date}-${month}-${year2} ${time}`;
+        break;
       case 'DD/MM/YYYY TH':
         date_str = `${date}/${month}/${year_th}`;
         break;

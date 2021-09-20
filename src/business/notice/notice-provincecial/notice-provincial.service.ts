@@ -1,36 +1,29 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CaseAlleService } from 'src/business/case/case-alle/case-alle.service';
 import { CaseService } from 'src/business/case/case/case.service';
 import { OracleCaseLits } from 'src/business/case/entities/oracle/case-lit.entity';
-import { OracleLookupTitleCases } from 'src/common/lookup/entities/oracle/lookup-title-case.entity';
 import { LookupAllegationService } from 'src/common/lookup/lookup-allegation/lookup-allegation.service';
 import { LookupNoticeTypeService } from 'src/common/lookup/lookup-notice-type/lookup-notice-type.service';
+import { LookupTitleCaseService } from 'src/common/lookup/lookup-title-case/lookup-title-case.service';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
 import { OracleNoticeProvincialDTO } from '../dto/notice-provincial.dto';
-import { OracleNoticeDTO } from '../dto/notice.dto';
 import { MySQLNoticeSends } from '../entities/mysql/notice-send.entity';
-import { MySQLNotices } from '../entities/mysql/notice.entity';
 import { OracleNoticeProvincials } from '../entities/oracle/notice-provincial.entity';
-import { NoticeSendService } from '../notice-send/notice-send.service';
 import { NoticeService } from '../notice/notice.service';
 
 @Injectable()
-export class NoticeProvincecialService extends HelperService {
+export class NoticeProvincialService extends HelperService {
   constructor(
     @InjectRepository(OracleNoticeProvincials)
     private oracleNoticeProvincialRepositories: Repository<OracleNoticeProvincials>,
-    @InjectRepository(MySQLNotices, "mysql")
-    @InjectRepository(OracleLookupTitleCases)
-    private oracleLookupTitleCaseRepositories: Repository<OracleLookupTitleCases>,
     @InjectRepository(OracleCaseLits)
     private oracleCaseLitRepositories: Repository<OracleCaseLits>,
-    @InjectRepository(MySQLNoticeSends, "mysql")
-    private mysqlNoticeSendRepositories: Repository<MySQLNoticeSends>,
 
+    private lookupTitleCaseService: LookupTitleCaseService,
     private caseService: CaseService,
     private noticeService: NoticeService,
     private paramService: ParamService,
@@ -272,7 +265,7 @@ export class NoticeProvincecialService extends HelperService {
 
       return await created.toResponseObject();
     } catch (error) {
-      throw new HttpException(`[oracle: create lookup notice failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: create province notice failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -280,14 +273,11 @@ export class NoticeProvincecialService extends HelperService {
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
       let migrateLogs = [];
-      let dupTotal: number = 0;
-      let newTotal: number = 0;
-      let errorTotal: number = 0;
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
-      const source = await this.noticeService.findMYSQLData({ inoutFlag: 1 }); // ดึงค่า MySQL
-      const total: number = source.total;
+      const source = await this.noticeService.findMYSQLData({ inoutFlag: 2 }); // ดึงค่า MySQL
+      const sourceTotal: number = await source.total;
 
-      if (params && await total > 0) {
+      if (params && await sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const {
             noticeRunning, runId, noticeNo, noticeYy, noticeTypeName, noticeDate, alleDesc, addr, moo, road, soi, addrNo, postCode, tambonId,
@@ -299,12 +289,12 @@ export class NoticeProvincecialService extends HelperService {
             status: "SUCCESS",
             sourceDBType: "MYSQL",
             sourceTableName: "pnotice",
+            sourceId: noticeRunning,
             destinationDBType: "ORACLE",
             destinationTableName: "PC_NOTICE_PROVINCIAL",
           }); // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migrateLog1.total > 0) { // หากเคย Migrate ไปแล้วระบบจะบันทึกการทำซ้ำ
-            dupTotal = dupTotal + 1;
             const logData = {
               name: "ระบบหมาย/ประกาศ: หมายต่างจังหวัด",
               serverType: `${process.env.SERVER_TYPE}`,
@@ -321,46 +311,43 @@ export class NoticeProvincecialService extends HelperService {
           } else {
 
             const myCase = await (await this.caseService.findMYSQLOneData(null, runId)).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
-            const orCaseTitle = await this.oracleLookupTitleCaseRepositories.findOne({ titleCaseName: `${myCase.title}`.trim() }); // ค้นหา
+            const orCaseTitle = await (await this.lookupTitleCaseService.findORACLEOneData({ titleCaseName: `${myCase.title}`.trim() })).items; // ค้นหา
             const orCaseLits = await this.oracleCaseLitRepositories.findOne({ caseId: runId, litigantName: `${noticetoName}`.trim() }); // ค้นหา
             const orCase = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+            const orNoticeTypes = await (await this.noticeTypeService.findORACLEOneData({ noticeTypeName: noticeTypeName })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
             if (orCase) { // ถ้าไม่มีให้ทำงาน
-              const orNoticeTypes = await (await this.noticeTypeService.findORACLEOneData({ noticeTypeName: noticeTypeName })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
               const orCaseAlles = await (await this.caseAlleService.findORACLEOneData({ caseId: orCase.caseId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
-              const orAllegantion = await (await this.lookupAllegationService.findORACLEOneData({ allegationId: orCaseAlles.allegationId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
+              // const orAllegantion = await (await this.lookupAllegationService.findORACLEOneData({ allegationId: orCaseAlles.allegationId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
               // const orLitigants = await (await this.LitigantService.findMYSQLOneData({ allegationId: orCaseAlles.allegationId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
 
-              const createData = {
-                address: `${addrNo} ${moo} ${addr} ${road} ${soi}`,
-                noticeTypeId: orNoticeTypes.noticeTypeId,
-                noticeCodeNo: noticeNo,
+              const createData: any = {
+                courtId: parseInt(params.paramValue),
+                address: `${addrNo}${(moo ? ` ${moo}` : '')}${(addr ? ` ${addr}` : '')}${(road ? ` ${road}` : '')}${(soi ? ` ${soi}` : '')}`,
+                noticeTypeId: orNoticeTypes ? orNoticeTypes.noticeTypeId : 0,
+                noticeCodeNo: noticeNo ? parseInt(`${noticeNo}`) : 0,
                 noticeCodeYear: noticeYy,
                 blackTitleId: orCaseTitle.titleCaseId,
-                blackIdnum: parseInt(`${orCaseTitle.titleCaseId}${myCase.id}`),
-                blackYear: parseInt(`${orCaseTitle.titleCaseId}${myCase.yy}`),
-                moo,
-                currentSubdistrictId: parseInt(tambonId),
-                currentProvinceId: provId,
-                currentDistrictId: parseInt(amphurId),
+                blackIdnum: orCaseTitle ? parseInt(`${orCaseTitle.titleCaseId}${myCase.id}`) : null,
+                blackYear: orCaseTitle ? parseInt(`${orCaseTitle.titleCaseId}${myCase.yy}`) : null,
+                moo: moo ? moo : "-",
+                currentSubdistrictId: tambonId ? parseInt(`${tambonId}`) : null,
+                currentProvinceId: provId ? parseInt(`${provId}`) : null,
+                currentDistrictId: amphurId ? parseInt(`${amphurId}`) : null,
                 accuDesc: myCase.accuDesc,
-                litTypeId: orCaseLits.caseId,
-                litigantName: orCaseLits.litigantName,
+                litTypeId: orCaseLits ? orCaseLits.caseId : null,
+                litigantName: orCaseLits ? orCaseLits.litigantName : null,
                 prosDesc: myCase.prosDesc,
                 road,
-                sendDate: noticeSends ? noticeSends.sendDate : null,
+                sendDate: noticeSends ? this.dateFormat('YYYY-MM-DD', noticeSends.sendDate) : null,
                 sendFee: sendAmt,
                 sendMethod: sendBy,
-                sendBy: noticeSends ? parseInt(noticeSends.sOfficerId) : null,
+                sendBy: noticeSends ? (noticeSends.sOfficerId ? parseInt(noticeSends.sOfficerId) : 0) : 0,
                 noticeSendStatus: 1
               }; // เตรียมข้อมูลในการเพิ่ม
 
               const created = await this.createData(payloadId, createData); // เพิ่มข้อมูลการเลื่อนพิจารณาคดี
-              if (created) {
-                newTotal = newTotal + 1;
-              } else {
-                errorTotal = errorTotal + 1;
-              }
+
               const migrateLog2 = {
                 name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
                 serverType: `${process.env.SERVER_TYPE}`,
@@ -378,14 +365,42 @@ export class NoticeProvincecialService extends HelperService {
 
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog2)); // เพิ่ม Log การ Migrate ข้อมูล
 
+            } else {
+              const logUnkow = {
+                name: "ระบบหมาย/ประกาศ: หมายต่างจังหวัด",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "pnotice",
+                sourceId: noticeRunning,
+                sourceData: JSON.stringify(source.items[index]),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_NOTICE_PROVINCIAL",
+              }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logUnkow)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
       }
 
-      return { migrateLogs, total, dupTotal, newTotal, errorTotal };
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_NOTICE_PROVINCIAL",
+      };
+
+      const cntDestination = await this.oracleNoticeProvincialRepositories.createQueryBuilder("A")
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" }); // เติม
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, unknowTotal, destinationTotal }; // เติม
     } catch (error) {
-      throw new HttpException(`[oracle: migrate notice failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[oracle: migrate notice province failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 }

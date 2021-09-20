@@ -1,16 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CaseService } from 'src/business/case/case/case.service';
-import { LookupBankService } from 'src/common/lookup/lookup-bank/lookup-bank.service';
-import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
-import { UserProfileService } from 'src/common/person/user-profile/user-profile.service';
-import { ParamService } from 'src/common/setting/param/param.service';
 import { HelperService } from 'src/shared/helpers/helper.service';
 import { Repository } from 'typeorm';
 import { OracleFinReceiptDetailDTO } from '../dto/fin-receipt-detail.dto';
 import { MySQLReceiptDetails } from '../entities/mysql/receipt-detail.entity';
 import { OracleFinReceiptDetails } from '../entities/oracle/fin-receipt-detail.entity';
-import { OracleFinReceipts } from '../entities/oracle/fin-receipt.entity';
 
 @Injectable()
 export class ReceiptDetailService extends HelperService {
@@ -229,11 +223,11 @@ export class ReceiptDetailService extends HelperService {
       await this.mysqlFilter(conditions, filters, moduleId);
 
       const getItems = await conditions.getOne();
-      const items = await getItems.toResponseObject();
+      const items = await getItems ? getItems.toResponseObject() : null;
 
       return { items, total: 1 };
     } catch (error) {
-      throw new HttpException(`[mysql: find one receipt failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`[mysql: find one payment detail failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

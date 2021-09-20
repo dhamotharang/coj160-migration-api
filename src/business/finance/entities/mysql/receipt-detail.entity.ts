@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { MySQLReceipts } from "./receipt.entity";
 
 @Entity({ name: "preceipt_detail" })
 export class MySQLReceiptDetails {
@@ -31,6 +32,9 @@ export class MySQLReceiptDetails {
   @Column({ name: "ref_id", nullable: true, comment: "transfer blackrecgen" }) refId: string;
   @Column({ name: "ref_finrecordgen", nullable: true, comment: "transfer dbo_tdFinance_Income finrecordgen" }) refFinrecordgen: string;
   @Column({ name: "ref_finrecordgen_tor", nullable: true, comment: "ntbc_gp_lawcourt.thFinanceOutSide.finrecordgen" }) refFinrecordgenTor: string;
+
+  @ManyToOne(type => MySQLReceipts, receipt => receipt.receiptDetails)
+  @JoinColumn({ name: "receipt_running" }) receipts: MySQLReceipts;
 
   toResponseObject() {
     const {

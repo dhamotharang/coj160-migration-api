@@ -3,13 +3,13 @@ import { ApiTags, ApiOperation, ApiQuery, ApiParam, ApiBearerAuth } from '@nestj
 import { AuthGaurd } from 'src/shared/guard/auth.guard';
 import { ResponseDataController } from 'src/shared/response/response-data.controller';
 import { OracleNoticeProvincialDTO } from '../dto/notice-provincial.dto';
-import { NoticeProvincecialService } from './notice-provincecial.service';
+import { NoticeProvincialService } from './notice-provincial.service';
 
-@ApiTags("Notice: Provincecial")
-@Controller('notice/provincecial')
-export class NoticeProvincecialController {
+@ApiTags("Notice: Provincial")
+@Controller('notice/provincial')
+export class NoticeProvincialController {
   constructor(
-    private mainService: NoticeProvincecialService,
+    private mainService: NoticeProvincialService,
     private resdata: ResponseDataController
   ) { }
 
@@ -64,6 +64,6 @@ export class NoticeProvincecialController {
   @UseGuards(new AuthGaurd())
   async createMigration(@Res() res, @Req() req, @Body() body) {
     const resdata = await this.mainService.createMigrationData(999, body);
-    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.total);
+    return this.resdata.responseCreateSuccess(req, res, resdata, 100, resdata.sourceTotal);
   }
 }

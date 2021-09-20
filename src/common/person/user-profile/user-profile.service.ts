@@ -77,13 +77,14 @@ export class UserProfileService {
     }
   }
 
-  async findORACLEOneData(userProfileId: number = null, filters: any = null) {
+  async findORACLEOneData(moduleId: number = 0, filters: any = null) {
     try {
       const conditions = await this.oracleUserProfileRepositories.createQueryBuilder("A")
-        .where("A.userProfileId <> 0");
 
-      if (userProfileId) {
-        await conditions.andWhere("A.userProfileId = :userProfileId", { userProfileId });
+      if (moduleId > 0) {
+        await conditions.where("A.userProfileId = :moduleId", { moduleId });
+      } else {
+        await conditions.where("A.userProfileId <> 0");
       }
 
       if (filters) {
@@ -119,7 +120,7 @@ export class UserProfileService {
       }
 
       const getItems = await conditions.getOne();
-      const items = await getItems.toResponseObject();
+      const items = await getItems ? getItems.toResponseObject() : null;
 
       return { items, total: 1 };
     } catch (error) {

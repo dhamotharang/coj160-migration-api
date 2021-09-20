@@ -1,5 +1,6 @@
 import { MySQLBanks } from "src/common/lookup/entities/mysql/bank.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from "typeorm";
+import { MySQLReceiptDetails } from "./receipt-detail.entity";
 
 @Entity({ name: "preceipt" })
 export class MySQLReceipts {
@@ -74,6 +75,9 @@ export class MySQLReceipts {
 
   @ManyToOne(type => MySQLBanks, bank => bank.receipts)
   @JoinColumn({ name: "bank_id" }) banks: MySQLBanks;
+
+  @OneToMany(type => MySQLReceiptDetails, details => details.receipts, { cascade: true })
+  @JoinColumn({ name: "receipt_running" }) receiptDetails: MySQLReceiptDetails;
 
   toResponseObject() {
     const {
