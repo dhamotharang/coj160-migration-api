@@ -342,12 +342,7 @@ export class LitigantService extends HelperService {
 
   async createMigrationData(payloadId: number, filters: any = null) {
     try {
-      const cntDestination = await this.oracleLitigantRepositories.createQueryBuilder("A")
-      await this.oracleFilter(cntDestination, filters);
-      const destinationOldTotal = await cntDestination.getCount();
-
-      let migrateLogs = [], errorTotal = 0, duplicateTotal = 0;
-
+      let migrateLogs = [];
       const params = await (await this.paramService.findORACLEOneData({ paramName: "COURT_ID" })).items; // ค้นหารหัสของศาล
       const source = await this.findMYSQLRequestData(); // ดึงค่าคำคู่ความฝั่ง MySQL
       const sourceTotal = await source.total;
@@ -368,9 +363,7 @@ export class LitigantService extends HelperService {
           })).items; // ตรวจสอบ Log การ Migrate ข้อมูล
 
           if (migresLogs1.length > 0) {
-            duplicateTotal = duplicateTotal + 1;
-
-            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData({
+            const logDup = {
               name: "คำคู่ความ",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
@@ -379,7 +372,11 @@ export class LitigantService extends HelperService {
               sourceTableName: "prequest",
               sourceId: reqRunning,
               sourceData: JSON.stringify(source.items[index]),
-            })); // เพิ่ม Log การ Migrate ข้อมูล
+              destinationDBType: "ORACLE",
+              destinationTableName: "PC_LITIGANT",
+            };
+
+            await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logDup)); // เพิ่ม Log การ Migrate ข้อมูล
           } else {
 
             const cases = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหาคดี (Oracle)
@@ -448,19 +445,41 @@ export class LitigantService extends HelperService {
               };
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
+            } else {
+              const unknowLog = {
+                name: "คำคู่ความ",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "prequest",
+                sourceId: reqRunning,
+                sourceData: JSON.stringify(source.items[index]),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LITIGANT",
+              };
 
-              if (!created) {
-                errorTotal = errorTotal + 1;
-              }
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(unknowLog)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
       }
 
-      const destinationNewTotal = await cntDestination.andWhere("A.createdBy = 999").getCount();
-      const destinationTotal = await cntDestination.getCount();
+      const filterCountLogs = {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: "PC_LITIGANT",
+      };
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal };
+      const cntDestination = await this.oracleLitigantRepositories.createQueryBuilder("A")
+      const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" });
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" });
+      const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount();
+      const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount();
+      const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount();
+
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, unknowTotal, errorTotal, destinationTotal };
     } catch (error) {
       throw new HttpException(`[oracle: litigant migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

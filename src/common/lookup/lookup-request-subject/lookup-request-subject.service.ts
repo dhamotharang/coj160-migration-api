@@ -269,7 +269,22 @@ export class LookupRequestSubjectService extends HelperService {
               };
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
+            } else {
+              const logUnknow = {
+                name: "เรื่องในคำคู่ความ",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "prequest_subject",
+                sourceId: subjectId,
+                sourceData: JSON.stringify({ subjectId, subjectName }),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_REQUEST_SUBJECT",
+              };
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logUnknow)); // เพิ่ม Log การ Migrate ข้อมูล
             }
+
           } else {
             const logData1 = {
               name: "เรื่องในคำคู่ความ",
@@ -297,11 +312,12 @@ export class LookupRequestSubjectService extends HelperService {
       const cntDestination = await this.oracleLookUpRequestSubjectRepositories.createQueryBuilder("A")
       const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
       const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" }); // เติม
       const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
       const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
       const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, unknowTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

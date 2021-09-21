@@ -245,10 +245,25 @@ export class LookupRequestTypeService extends HelperService {
               };
 
               migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logData));
+            } else {
+              const logUnknow = {
+                name: "ประเภทคำร้อง",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "prequest_type",
+                sourceId: reqTypeId,
+                sourceData: JSON.stringify({ reqTypeId, reqTypeDesc }),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_REQUEST_TYPE",
+              };
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(logUnknow)); // เพิ่ม Log การ Migrate ข้อมูล
             }
+
           } else {
             const logData2 = {
-              name: "หน่วยงาน",
+              name: "ประเภทคำร้อง",
               serverType: `${process.env.SERVER_TYPE}`,
               status: "DUPLICATE",
               datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
@@ -273,12 +288,13 @@ export class LookupRequestTypeService extends HelperService {
 
       const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
       const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" }); // เติม
       const cntDestination = await this.oracleLookupRequestTypeRepositories.createQueryBuilder("A") // เติม
       const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
       const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
       const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, unknowTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[Migrate data failed.] => ${error.message}`, HttpStatus.BAD_REQUEST)
     }

@@ -192,7 +192,7 @@ export class HoldReasonService extends HelperService {
       let migrateLogs = []; // เติม
       const sourceTotal = await source.total;  // เติม
 
-      if (params && await source.total > 0) {
+      if (sourceTotal > 0) {
         for (let index = 0; index < source.items.length; index++) {
           const { delayId, delayName } = source.items[index];
 
@@ -266,7 +266,7 @@ export class HoldReasonService extends HelperService {
       const destinationNewTotal = await (await this.oracleFilter(await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy = 999").getCount(); // เติม
       const destinationTotal = await (await this.oracleFilter(await this.oracleProceedHoldReasonsRepositories.createQueryBuilder("A"), filters)).getCount(); // เติม
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, unknowTotal: 0, errorTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate proceed hold reason failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

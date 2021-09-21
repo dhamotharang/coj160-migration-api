@@ -248,11 +248,11 @@ export class AppointService extends HelperService {
             const orCases = await (await this.caseService.findORACLEOneData({ convertStringCase: runId })).items; // ค้นหา การเลื่อนพิจารณา (Oracle)
             const orAppTables = await (await this.appointTableService.findORACLEOneData({ tempId: tableId })).items;
 
-            if (!orCases || orAppTables) { // ถ้าไม่มีให้ทำงาน
+            if (!orCases) { // ถ้าไม่มีให้ทำงาน
               const createData = {
                 caseId: runId,
                 reasonAppointId: 0,
-                appointTableId: orAppTables.appointTableId,
+                appointTableId: orAppTables ? orAppTables.appointTableId : 0,
                 isElectronicFiling: 0,
               }; // เตรียมข้อมูลในการเพิ่ม
 
@@ -418,6 +418,20 @@ export class AppointService extends HelperService {
                   appointDelays = findappointDelays
                 }
               }
+            } else {
+              const unknowLog = {
+                name: "ระบบการพิจารณาคดี: ตารางนัด",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "pappointment",
+                sourceId: appRunning,
+                sourceData: JSON.stringify(source.items[index]),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_PROCEED_APPOINT",
+              };
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(unknowLog)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
@@ -430,12 +444,13 @@ export class AppointService extends HelperService {
       };
 
       const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" });
       const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
       const destinationOldTotal = await (await this.oracleFilter(await this.oracleAppointRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
       const destinationNewTotal = await (await this.oracleFilter(await this.oracleAppointRepositories.createQueryBuilder("A"), filters)).andWhere("A.createdBy = 999").getCount(); // เติม
       const destinationTotal = await (await this.oracleFilter(await this.oracleAppointRepositories.createQueryBuilder("A"), filters)).getCount(); // เติม
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, unknowTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate appoint failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }

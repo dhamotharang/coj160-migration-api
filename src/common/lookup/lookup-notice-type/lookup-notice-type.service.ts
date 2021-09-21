@@ -314,6 +314,21 @@ export class LookupNoticeTypeService extends HelperService {
               }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
               await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog1)); // เพิ่ม Log การ Migrate ข้อมูล
+            } else {
+              const unknowLog = {
+                name: "ระบบหมาย/ประกาศ: ประเภทหมาย",
+                serverType: `${process.env.SERVER_TYPE}`,
+                status: "UNKNOW",
+                datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                sourceDBType: "MYSQL",
+                sourceTableName: "pnotice_type",
+                sourceId: noticeTypeId,
+                sourceData: JSON.stringify(source.items[index]),
+                destinationDBType: "ORACLE",
+                destinationTableName: "PC_LOOKUP_NOTICE_TYPE",
+              };
+
+              await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(unknowLog)); // เพิ่ม Log การ Migrate ข้อมูล
             }
           }
         }
@@ -327,12 +342,13 @@ export class LookupNoticeTypeService extends HelperService {
 
       const cntDestination = await this.oracleLookupNoticeTypeRepositories.createQueryBuilder("A")
       const errorTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "ERROR" });
+      const unknowTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "UNKNOW" });
       const duplicateTotal = await this.migrateLogService.countData({ ...filterCountLogs, status: "DUPLICATE" }); // เติม
       const destinationOldTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy <> 999").getCount(); // เติม
       const destinationNewTotal = await (await this.oracleFilter(cntDestination, filters)).andWhere("A.createdBy = 999").getCount(); // เติม
       const destinationTotal = await (await this.oracleFilter(cntDestination, filters)).getCount(); // เติม
 
-      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, destinationTotal }; // เติม
+      return { migrateLogs, sourceTotal, destinationOldTotal, destinationNewTotal, duplicateTotal, errorTotal, unknowTotal, destinationTotal }; // เติม
     } catch (error) {
       throw new HttpException(`[oracle: migrate notice type failed.] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
