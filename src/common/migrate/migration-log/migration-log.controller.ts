@@ -41,6 +41,15 @@ export class MigrationLogController {
     return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
   }
 
+  @Get('summary')
+  @ApiBearerAuth()
+  @UseGuards(new AuthGaurd())
+  @ApiOperation({ summary: "เรียกดูข้อมูลสรุปจำนวน" })
+  async summaryData(@Res() res, @Req() req, @Query() query) {
+    const resdata = await this.mainService.summaryLogData();
+    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+  }
+
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(new AuthGaurd())
@@ -48,7 +57,7 @@ export class MigrationLogController {
   @ApiOperation({ summary: "เรียกดูข้อมูล Table ทั้งหมด" })
   async findById(@Res() res, @Req() req, @Param('id') id) {
     const resdata = await this.mainService.findPOSTGRESOneData(id);
-    return this.resdata.responseFindSuccess(req, res, resdata.items, resdata.total);
+    return this.resdata.responseFindOneSuccess(req, res, resdata.items, resdata.total);
   }
 
 

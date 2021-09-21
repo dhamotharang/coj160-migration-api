@@ -496,16 +496,17 @@ export class FinReceiptService extends HelperService {
 
 
                   // Credit
-                  const createCreditData: any = {
+                  const createCreditData = {
                     amount: sumCheck ? sumCheck : 0,
                     bankCode: banks ? banks.bankId : 0,
                     cardHolderName: "-",
-                    // expiredDate: this.dateFormat("YYYY-MM-DD H:i:s", new Date("30/12/1899")),
+                    expiredDate: this.dateFormat("YYYY-MM-DD H:i:s", new Date('1899-12-30 00:00:00')),
                     courtId: parseInt(params.paramValue),
                     creditNo: "-",
-                    bankName: banks ? banks.bankName : null,
+                    bankName: banks ? banks.bankName : "-",
                     receiptId: parseInt(created.receiptId),
-                    receiptDetailId: parseInt(`${createdDetail.detailId}`)
+                    receiptDetailId: parseInt(`${createdDetail.detailId}`),
+                    paidDate: this.dateFormat("YYYY-MM-DD H:i:s", rcvDate),
                   };
                   const createCredit = await this.receiptCrditService.createData(payloadId, createCreditData); // เพิ่มข้อมูล
 
@@ -530,41 +531,39 @@ export class FinReceiptService extends HelperService {
                 }
 
 
-                /* 
-                                // Cancel
-                                if (cancelFlag === 1) {
-                                  const userProfiles1 = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${updateUser}`.trim() })).items;
-                
-                                  const createCancelData = {
-                                    cancelBy: userProfiles1 ? userProfiles1.userProfileId : 0,
-                                    cancalDate: updateDate ? this.dateFormat("YYYY-MM-DD H:i:s", updateDate) : null,
-                                    cancelReason,
-                                    notes: remark ? remark : "-",
-                                    courtId: parseInt(params.paramValue),
-                                    receiptId: created.receiptId,
-                                  };
-                                  const createCancel = await this.receiptCancelService.createData(payloadId, createCancelData); // เพิ่มข้อมูล
-                
-                                  if (createCancel) {
-                                    const migrateLog4 = {
-                                      name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
-                                      serverType: `${process.env.SERVER_TYPE}`,
-                                      status: (createCancel ? "SUCCESS" : "ERROR"),
-                                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
-                                      sourceDBType: "MYSQL",
-                                      sourceTableName: "preceipt",
-                                      sourceId: receiptRunning,
-                                      sourceData: JSON.stringify(createCancelData),
-                                      destinationDBType: "ORACLE",
-                                      destinationTableName: "PC_FIN_RECEIPT_CANCEL",
-                                      destinationId: createCancel.cancelId,
-                                      destinationData: JSON.stringify(createCancel)
-                                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
-                
-                                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
-                                  }
-                                }
-                 */
+                // Cancel
+                if (cancelFlag === 1) {
+                  const userProfiles1 = await (await this.userProfileService.findORACLEOneData(null, { userProfileFullName: `${updateUser}`.trim() })).items;
+
+                  const createCancelData = {
+                    cancelBy: userProfiles1 ? userProfiles1.userProfileId : 0,
+                    cancalDate: updateDate ? this.dateFormat("YYYY-MM-DD H:i:s", updateDate) : null,
+                    cancelReason,
+                    notes: remark ? remark : "-",
+                    courtId: parseInt(params.paramValue),
+                    receiptId: created.receiptId,
+                  };
+                  const createCancel = await this.receiptCancelService.createData(payloadId, createCancelData); // เพิ่มข้อมูล
+
+                  if (createCancel) {
+                    const migrateLog4 = {
+                      name: "ระบบการเงิน: ยกเลิกใบเสร็จ",
+                      serverType: `${process.env.SERVER_TYPE}`,
+                      status: (createCancel ? "SUCCESS" : "ERROR"),
+                      datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
+                      sourceDBType: "MYSQL",
+                      sourceTableName: "preceipt",
+                      sourceId: receiptRunning,
+                      sourceData: JSON.stringify(createCancelData),
+                      destinationDBType: "ORACLE",
+                      destinationTableName: "PC_FIN_RECEIPT_CANCEL",
+                      destinationId: createCancel.cancelId,
+                      destinationData: JSON.stringify(createCancel)
+                    }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
+
+                    await migrateLogs.push(await this.migrateLogService.createPOSTGRESData(migrateLog4)); // เพิ่ม Log การ Migrate ข้อมูล
+                  }
+                }
 
 
 

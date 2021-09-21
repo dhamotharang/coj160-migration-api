@@ -65,6 +65,9 @@ import { MySQLCourts } from './entities/mysql/court.entity';
 import { LookupTitleCaseController } from './lookup-title-case/lookup-title-case.controller';
 import { LookupTitleCaseService } from './lookup-title-case/lookup-title-case.service';
 import { OracleLookupTitleCases } from './entities/oracle/lookup-title-case.entity';
+import { LookupNoticeSendTypeResultService } from './lookup-notice-send-type-result/lookup-notice-send-type-result.service';
+import { LookupNoticeSendTypeResultController } from './lookup-notice-send-type-result/lookup-notice-send-type-result.controller';
+import { OracleLookupNoticeSendTypeResults } from './entities/oracle/lookup-notice-send-type-result.entity';
 
 @Module({
   imports: [
@@ -85,7 +88,8 @@ import { OracleLookupTitleCases } from './entities/oracle/lookup-title-case.enti
       OracleLookupReceiptTypes,
       OracleLookupReceiptSubTypes,
       OracleLookupBanks,
-      OracleLookupTitleCases
+      OracleLookupTitleCases,
+      OracleLookupNoticeSendTypeResults
     ]),
     TypeOrmModule.forFeature([
       MySQLAppointDelays,
@@ -122,6 +126,7 @@ import { OracleLookupTitleCases } from './entities/oracle/lookup-title-case.enti
     LookupReceiptTypeController,
     LookupBankController,
     LookupTitleCaseController,
+    LookupNoticeSendTypeResultController,
   ],
   providers: [
     LookupNoticeTypeService,
@@ -140,7 +145,8 @@ import { OracleLookupTitleCases } from './entities/oracle/lookup-title-case.enti
     LookupReceiptSubTypeService,
     LookupReceiptTypeService,
     LookupBankService,
-    LookupTitleCaseService
+    LookupTitleCaseService,
+    LookupNoticeSendTypeResultService
   ],
   exports: [
     LookupNoticeTypeService,
@@ -159,7 +165,8 @@ import { OracleLookupTitleCases } from './entities/oracle/lookup-title-case.enti
     LookupReceiptSubTypeService,
     LookupReceiptTypeService,
     LookupBankService,
-    LookupTitleCaseService
+    LookupTitleCaseService,
+    LookupNoticeSendTypeResultService
   ]
 })
 export class LookupModule { }

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { getConnection, getManager, Repository } from 'typeorm';
 import { MigrationLogDTO } from '../dto/migration-log.dto';
 import { PostgresMigrationLogs } from '../entities/postgres/migration-log.entity';
 
@@ -10,6 +10,36 @@ export class MigrationLogService {
     @InjectRepository(PostgresMigrationLogs, "postgresql")
     private migrationLogRepositories: Repository<PostgresMigrationLogs>
   ) { }
+
+  private allTable = [
+    { sourceTable: "prequest_type", destinationTable: "PC_LOOKUP_REQUEST_TYPE", title: "ระบบคำคู่ความ: ประเภทคำร้อง" },
+    { sourceTable: "prequest_subject", destinationTable: "PC_LOOKUP_REQUEST_SUBJECT", title: "ระบบคำคู่ความ: เรื่องประเภทคำร้อง" },
+    { sourceTable: "prequest", destinationTable: "PC_LITIGANT", title: "ระบบคำคู่ความ" },
+    { sourceTable: "pappoint_delay", destinationTable: "PC_PROCEED_HOLD_REASON", title: "ระบบพิจารณาคดี: ค้างพิจารณาคดี" },
+    { sourceTable: "pappoint_list | pappoint_list1 | pappoint_sub_list", destinationTable: "PC_LOOKUP_APPOINT_LIST", title: "ระบบพิจารณาคดี: รายการนัด" },
+    { sourceTable: "pappoint_table", destinationTable: "PC_LOOKUP_APPOINT_TABLE", title: "ระบบพิจารณาคดี: ประเภทรางนัด" },
+    { sourceTable: "pappointment", destinationTable: "PC_PROCEED_APPOINT", title: "ระบบพิจารณาคดี: นัดความ" },
+    { sourceTable: "pappointment", destinationTable: "PC_PROCEED_APPOINT_CONTINUE", title: "ระบบพิจารณาคดี: ข้อมูลแจ้งเตือนพยาน" },
+    { sourceTable: "pappointment", destinationTable: "PC_PROCEED_APPOINT_CASE_JUDGE", title: "ระบบพิจารณาคดี: ข้อมูลองค์คณะของการนัดความ" },
+    { sourceTable: "pappointment", destinationTable: "PC_PROCEED_APPOINT_RESULT", title: "ระบบพิจารณาคดี: ข้อมูลผลลัพธ์นัดความ" },
+    { sourceTable: "pnotice_type", destinationTable: "PC_LOOKUP_NOTICE_TYPE", title: "ระบบหมาย/ประกาศ: ประเภทหมาย/ประกาศ" },
+    { sourceTable: "pnotice_send_result", destinationTable: "PC_LOOKUP_NOTICE_SEND_RESULT", title: "ระบบหมาย/ประกาศ: ประเภทผลการส่งหมาย" },
+    { sourceTable: "pnotice_send_type", destinationTable: "PC_LOOKUP_SEND_METHOD", title: "ระบบหมาย/ประกาศ: วิธีการส่งหมาย" },
+    { sourceTable: "pnotice", destinationTable: "PC_NOTICE", title: "ระบบหมาย/ประกาศ" },
+    { sourceTable: "pnotice", destinationTable: "PC_NOTICE_PROVINCIAL", title: "ระบบหมาย/ประกาศ: หมายนอกเขต" },
+    { sourceTable: "pnotice_send", destinationTable: "PC_NOTICE_ISSUED", title: "ระบบหมาย/ประกาศ: ข้อมูลการจ่ายหมาย" },
+    { sourceTable: "pnotice_send", destinationTable: "PC_NOTICE_SEND_RESULT", title: "ระบบหมาย/ประกาศ: ข้อมูลการจ่ายหมาย" },
+    { sourceTable: "preceipt_type", destinationTable: "PC_LOOKUP_RECEIPT_TYPE", title: "ระบบการเงิน: ประเภทใบเสร็จ" },
+    { sourceTable: "preceipt_sub_type", destinationTable: "PC_LOOKUP_RECEIPT_SUB_TYPE", title: "ระบบการเงิน: ประเภทย่อยใบเสร็จ" },
+    { sourceTable: "preceipt", destinationTable: "PC_FIN_RECEIPT", title: "ระบบการเงิน: ใบเสร็จ" },
+    { sourceTable: "preceipt_detail", destinationTable: "PC_FIN_RECEIPT_DETAIL", title: "ระบบการเงิน: รายละเอียดใบเสร็จ" },
+    { sourceTable: "preceipt", destinationTable: "PC_FIN_RECEIPT_CHEQUE", title: "ระบบการเงิน: ข้อมูล  CHEQUE" },
+    { sourceTable: "preceipt", destinationTable: "PC_FIN_RECEIPT_CREDIT", title: "ระบบการเงิน: ข้อมูล  CREDIT" },
+    { sourceTable: "preceipt", destinationTable: "PC_FIN_RECEIPT_CANCEL", title: "ระบบการเงิน: ข้อมูลการยกเลิกใบเสร็จ" },
+    { sourceTable: "preturn_receipt", destinationTable: "PC_FIN_PAYMENT", title: "ระบบการเงิน: ข้อมูลการชำระเงิน" },
+    { sourceTable: "preturn_receipt", destinationTable: "PC_FIN_PAYMENT_DETAIL", title: "ระบบการเงิน: ข้อมูลร่ยละเอียดการชำระเงิน" },
+    { sourceTable: "preturn_receipt", destinationTable: "PC_FIN_RECEIPT_BALANCE_HISTORY", title: "ระบบการเงิน: ประวัติการชำระและยอดเงินคงเหลือ" },
+  ];
 
   // Filter zone
   async postgresFilter(conditions, filters: any = null, moduleId: number = 0) {
@@ -123,6 +153,76 @@ export class MigrationLogService {
       return { items, total };
     } catch (error) {
       throw new HttpException(`[postgres: find one migration log failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async summaryLogData() {
+    try {
+      const items = await Promise.all(await this.allTable.map(async element => {
+        return await this.summaryConditionLogData(element);
+      }));
+
+      return { items, total: this.allTable.length };
+    } catch (error) {
+      throw new HttpException(`[postgres: summary migration log failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async summaryConditionLogData(data: any) {
+    try {
+      const filterCountLogs = await {
+        serverType: `${process.env.SERVER_TYPE}`,
+        destinationDBType: "ORACLE",
+        destinationTableName: data.destinationTable,
+      };
+
+      let myQueryString = "";
+      if (data.destinationTable === "PC_LOOKUP_APPOINT_LIST") {
+        myQueryString = await `
+        SELECT
+          COUNT(*) sourceCNT
+        FROM (
+          SELECT
+            A.app_id appId,
+            A.app_name appName,
+            'pappoint_list' appTable
+          FROM pappoint_list A
+
+          UNION
+
+          SELECT
+            B.app_id appId,
+            B.app_name appName,
+            'pappoint_list1' appTable
+          FROM pappoint_list1 B
+
+          UNION
+
+          SELECT
+            C.app_sub_id appId,
+            C.app_sub_name appName,
+            'pappoint_sub_list' appTable
+          FROM pappoint_sub_list C
+        ) AppointList
+        `;
+      } else {
+        myQueryString = await `SELECT COUNT(*) sourceCNT FROM ${data.sourceTable}`;
+      }
+      const orQueryString = await `SELECT COUNT(*) DESTCNT FROM "${process.env.ORA_USERNAME}"."${data.destinationTable}" "A"`;
+
+      const sourceTotal = await (await getManager("mysql").query(myQueryString))[0].sourceCNT;
+
+      const errorTotal = await this.countData({ ...filterCountLogs, status: "ERROR" });
+      const duplicateTotal = await this.countData({ ...filterCountLogs, status: "DUPLICATE" });
+      const unknowTotal = await this.countData({ ...filterCountLogs, status: "UNKNOW" });
+
+      const destinationOldTotal = await (await getManager().query(`${orQueryString} WHERE "A"."CREATED_BY" <> 999`))[0].DESTCNT;
+      const destinationNewTotal = await (await getManager().query(`${orQueryString} WHERE "A"."CREATED_BY" = 999`))[0].DESTCNT;
+      const destinationTotal = await (await getManager().query(`${orQueryString}`))[0].DESTCNT;
+
+      return await { ...data, sourceTotal, destinationOldTotal, destinationNewTotal, destinationTotal, duplicateTotal, errorTotal, unknowTotal };
+    } catch (error) {
+      throw new HttpException(`[postgres: summary condition migration log failed] => ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

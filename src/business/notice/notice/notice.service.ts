@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CaseAlleService } from 'src/business/case/case-alle/case-alle.service';
 import { CaseService } from 'src/business/case/case/case.service';
 import { OracleCaseLits } from 'src/business/case/entities/oracle/case-lit.entity';
-import { OracleLookupNoticeSendTypeResults } from 'src/business/proceed/entities/oracle/lookup-notice-send-type-result.entity';
 import { LookupAllegationService } from 'src/common/lookup/lookup-allegation/lookup-allegation.service';
+import { LookupNoticeSendTypeResultService } from 'src/common/lookup/lookup-notice-send-type-result/lookup-notice-send-type-result.service';
 import { LookupNoticeTypeService } from 'src/common/lookup/lookup-notice-type/lookup-notice-type.service';
 import { MigrationLogService } from 'src/common/migrate/migration-log/migration-log.service';
 import { ParamService } from 'src/common/setting/param/param.service';
@@ -16,7 +16,6 @@ import { MySQLNotices } from '../entities/mysql/notice.entity';
 import { OracleNotices } from '../entities/oracle/notice.entity';
 import { NoticeIssuedService } from '../notice-issued/notice-issued.service';
 import { NoticeSendResultService } from '../notice-send-result/notice-send-result.service';
-import { NoticeSendService } from '../notice-send/notice-send.service';
 
 @Injectable()
 export class NoticeService extends HelperService {
@@ -29,8 +28,6 @@ export class NoticeService extends HelperService {
     private mysqlNoticeSendRepositories: Repository<MySQLNoticeSends>,
     @InjectRepository(OracleCaseLits)
     private oracleCaseLitRepositories: Repository<OracleCaseLits>,
-    @InjectRepository(OracleLookupNoticeSendTypeResults)
-    private oracleLookupNoticeSendTypeResults: Repository<OracleLookupNoticeSendTypeResults>,
 
     private caseService: CaseService,
     private noticeTypeService: LookupNoticeTypeService,
@@ -40,7 +37,8 @@ export class NoticeService extends HelperService {
 
     private paramService: ParamService,
     private migrateLogService: MigrationLogService,
-    private noticeIssuedService: NoticeIssuedService
+    private noticeIssuedService: NoticeIssuedService,
+    private lookupNoticeSendTypeResultService: LookupNoticeSendTypeResultService
   ) {
     super();
   }
@@ -463,9 +461,9 @@ export class NoticeService extends HelperService {
                     const createIssued = await this.noticeIssuedService.createData(payloadId, issuedData);
 
                     const migrateLog3 = {
-                      name: "ระบบหมาย/ประกาศ: วิธีการส่ง",
+                      name: "ระบบหมาย/ประกาศ: ข้อมูลการจ่ายหมาย",
                       serverType: `${process.env.SERVER_TYPE}`,
-                      status: (created ? "SUCCESS" : "ERROR"),
+                      status: (createIssued ? "SUCCESS" : "ERROR"),
                       datetime: this.dateFormat("YYYY-MM-DD H:i:s"),
                       sourceDBType: "MYSQL",
                       sourceTableName: "pnotice",
@@ -473,7 +471,7 @@ export class NoticeService extends HelperService {
                       sourceData: JSON.stringify(createData),
                       destinationDBType: "ORACLE",
                       destinationTableName: "PC_NOTICE_ISSUED",
-                      destinationId: created.noticeId,
+                      destinationId: createIssued.issuedId,
                       destinationData: JSON.stringify(createIssued)
                     }; // เตรียมข้อมูล log ในการบันทึกข้อมูล
 
@@ -487,7 +485,7 @@ export class NoticeService extends HelperService {
 
                 try {
                   if (noticeSends && noticeSends.judgeOrderDesc) {
-                    const sendResultOne = await this.oracleLookupNoticeSendTypeResults.findOne({ noticeSendTypeResultName: `${noticeSends.judgeOrderDesc}`.trim() });
+                    const sendResultOne = await (await this.lookupNoticeSendTypeResultService.findORACLEOneData({ noticeSendTypeResultName: `${noticeSends.judgeOrderDesc}`.trim() })).items;
                     let resultType = 0;
                     if (noticeSends.noticeResult === 1) {
                       switch (noticeSends.noticeResultBy) {
@@ -526,7 +524,7 @@ export class NoticeService extends HelperService {
 
                     const sendResultData = {
                       noticeId: created.noticeId,
-                      evidenceForOrder: sendResultOne ? sendResultOne.noticeSendTypeResultId : null,
+                      evidenceForOrder: sendResultOne ? sendResultOne.noticeSendTypeResultId : 0,
                       resultType,
                       notes,
                       litigantReceivedDate: noticeSends ? this.dateFormat('YYYY-MM-DD H:i:s', noticeSends.rcvnoticeDate) : null,

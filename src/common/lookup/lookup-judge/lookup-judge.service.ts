@@ -190,7 +190,7 @@ export class LookupJudgeService extends HelperService {
     try {
       const conditions = await this.mysqlJudgeRepositories.createQueryBuilder("A");
 
-      await this.oracleFilter(conditions, filters, moduleId);
+      await this.mysqlFilter(conditions, filters, moduleId);
 
       const getItems = await conditions.getOne();
       const items = await (getItems ? getItems.toResponseObject() : null);

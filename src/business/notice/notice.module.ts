@@ -10,8 +10,8 @@ import { NoticeSendController } from './notice-send/notice-send.controller';
 import { NoticeSendService } from './notice-send/notice-send.service';
 import { MySQLNoticeSends } from './entities/mysql/notice-send.entity';
 import { LitigantModule } from '../litigant/litigant.module';
-import { NoticeProvincialController } from './notice-provincecial/notice-provincial.controller';
-import { NoticeProvincialService } from './notice-provincecial/notice-provincial.service';
+import { NoticeProvincialController } from './notice-provincial/notice-provincial.controller';
+import { NoticeProvincialService } from './notice-provincial/notice-provincial.service';
 import { OracleLookupTitleCases } from 'src/common/lookup/entities/oracle/lookup-title-case.entity';
 import { OracleCaseLits } from '../case/entities/oracle/case-lit.entity';
 import { OracleNoticeProvincials } from './entities/oracle/notice-provincial.entity';
@@ -21,7 +21,7 @@ import { NoticeSendResultController } from './notice-send-result/notice-send-res
 import { NoticeSendResultService } from './notice-send-result/notice-send-result.service';
 import { OracleNoticeIssueds } from './entities/oracle/notice-issued.entity';
 import { OracleNoticeSendResults } from './entities/oracle/notice-send-result.entity';
-import { OracleLookupNoticeSendTypeResults } from '../proceed/entities/oracle/lookup-notice-send-type-result.entity';
+import { OracleLookupNoticeSendTypeResults } from 'src/common/lookup/entities/oracle/lookup-notice-send-type-result.entity';
 
 @Module({
   imports: [

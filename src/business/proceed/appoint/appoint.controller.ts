@@ -6,7 +6,7 @@ import { OracleProceedAppointDTO } from '../dto/proceed-appoint.dto';
 import { AppointService } from './appoint.service';
 
 @ApiTags("Proceed: Appoint")
-@Controller('proceedAppoint')
+@Controller('proceed/appoint')
 export class AppointController {
   constructor(
     private mainService: AppointService,
